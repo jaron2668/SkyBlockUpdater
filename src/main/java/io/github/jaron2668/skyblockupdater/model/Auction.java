@@ -4,11 +4,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 import java.util.List;
+
+
 public class Auction {
     private UUID id;
     private String itemId;
     private String itemName;
-    private List<String> importantEnchantments;
+    private List<Enchantment> importantEnchantments;
     private int dungeonStars;
     private String reforge;
     private String rarity;
@@ -60,11 +62,11 @@ public class Auction {
         this.endTime = endTime;
     }
 
-    public List<String> getImportantEnchantments() {
+    public List<Enchantment> getImportantEnchantments() {
         return importantEnchantments;
     }
 
-    public void setImportantEnchantments(List<String> importantEnchantments) {
+    public void setImportantEnchantments(List<Enchantment> importantEnchantments) {
         this.importantEnchantments = importantEnchantments;
     }
 
@@ -92,8 +94,8 @@ public class Auction {
         this.rarity = rarity;
     }
 
-    public boolean hasEnchant(String name) {
-        return importantEnchantments != null && importantEnchantments.stream().anyMatch(e -> e.equalsIgnoreCase(name));
+    public boolean hasEnchant(Enchantment.EnchantmentType type) {
+        return importantEnchantments != null && importantEnchantments.stream().anyMatch(e -> e.getType() == type);
     }
 
     public boolean isDungeonItem() {

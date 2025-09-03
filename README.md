@@ -18,7 +18,6 @@ This project is a Java 21 microservice for my Hypixel Skyblock mod. It periodica
 - Maven
 - Spring Boot (Web, JDBC)
 - PostgreSQL JDBC Driver
-- OkHttp (HTTP client)
 - jackson-databind
 - Kafka/Redpanda
 - Docker & Docker Compose for containerized deployment
@@ -95,7 +94,7 @@ The database will be accessible at:
 ## Notes
 
 - By default, the backend port 8080 is bound only to localhost for security. To expose it to external networks, modify the `docker-compose.yml` ports section.
-- Logs are output to the Docker container logs — use `docker logs hypixel-bot-backend` to view.
+- Logs are output to the Docker container logs — use `docker logs hypixel-updater` to view.
 
 ---
 
