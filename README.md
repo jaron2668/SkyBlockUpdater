@@ -1,14 +1,15 @@
-# Hypixel Updater
+# SkyblockUpdater
 
-This project is a Java 21 microservice for my Hypixel Skyblock mod. It periodically fetches auction data from the Hypixel API, stores active and ended auctions in a PostgreSQL database
+This project is a Java 21 microservice for my Hypixel-Skyblock mod. It periodically fetches auction data from the Hypixel API, stores active and ended auctions 
+in a PostgreSQL database and produces Kafka events for other microservices. 
 
 ---
 
 ## Features
 
-- Periodically fetch active/ended auctions and store sales data
-- Uses PostgreSQL as a persistent data store
-- Uses X and Y for Hypixel API communication and JSON parsing
+- Periodically fetch active/ended auctions and store sales data.
+- Uses PostgreSQL as a persistent data store.
+- Dispatches Kafka events for new or ended auctions ('updater-newauction' / 'updater-endedauction').
 
 ---
 
@@ -16,9 +17,10 @@ This project is a Java 21 microservice for my Hypixel Skyblock mod. It periodica
 
 - Java 21
 - Maven
-- Spring Boot (Web, JDBC)
+- Spring Boot (JDBC)
 - PostgreSQL JDBC Driver
 - jackson-databind
+- Querz-NBT
 - Kafka/Redpanda
 - Docker & Docker Compose for containerized deployment
 
@@ -39,59 +41,53 @@ This project is a Java 21 microservice for my Hypixel Skyblock mod. It periodica
 
 ### 2. Create a `.env` file
 
+> This step is not needed but recommended to replace default credentials
+
 Create a `.env` file in the root directory with the following content, replacing the placeholders with your credentials:
 
-    POSTGRES_DB=hypixel_db
-    POSTGRES_USER=hypixel_user
+    POSTGRES_DB=skyblock_db
+    POSTGRES_USER=skyblock_user
     POSTGRES_PASSWORD=supersecret
 
 > No quotes needed unless your values contain spaces or special characters.
+ 
 
 ### 3. Build and start services
 
-Run the following command to build and start the backend and PostgreSQL containers:
+Run the following command to build and start the SkyblockUpdater, Kafka and PostgreSQL containers:
 
     docker compose up --build
 
 This will:
 
+- Start a Redpanda container for kafka.
 - Start a PostgreSQL database with the specified credentials.
-- Build the backend app Docker image.
-- Run the backend container, connecting it to the database and injecting the required environment variables.
+- Build the SkyblockUpdater Docker image.
+- Start a skyblock-updater container (from the build Docker image), connecting it to the database and redpanda and injecting the required environment variables.
 
-### 4. Access the backend API
-
-The backend will be accessible at:
-
-`http://localhost:8080`
+### 4. Access
 
 The database will be accessible at:
 
-`http://localhost:5432` (if you uncomment the line in the Dockerfile)
+`http://localhost:5432` (only on localhost)
+
+Redpanda admin http api (if uncommented in docker-compose) will be accessible at:
+
+`http://localhost:9644` (only on localhost)
 
 
 ---
 
 ## Usage
 
-- The backend periodically fetches auctions every 5 minutes (ended auctions) and every 1 minute (current BIN auctions).
-- Produces Kafka events for other microservices to consume
----
-
-## Configuration
-
-- Environment variables injected via `.env` file and passed through Docker Compose:
-    - `POSTGRES_DB` — PostgreSQL database name
-    - `POSTGRES_USER` — PostgreSQL username
-    - `POSTGRES_PASSWORD` — PostgreSQL password
-- Database connection configured via Spring Boot datasource environment variables.
-
+- The updater periodically fetches bin auctions every 5 minutes and ended auctions every 15 minutes.
+- Produces Kafka events for other microservices to consume.
 ---
 
 ## Notes
 
-- By default, the backend port 8080 is bound only to localhost for security. To expose it to external networks, modify the `docker-compose.yml` ports section.
-- Logs are output to the Docker container logs — use `docker logs hypixel-updater` to view.
+- By default, all ports are only bound to localhost for security. To expose it to external networks, modify the `docker-compose.yml` ports section.
+- Logs are output to the Docker container logs — use `docker logs skyblock-updater` to view.
 
 ---
 

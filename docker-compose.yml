@@ -5,8 +5,8 @@ services:
     image: redpandadata/redpanda:latest
     container_name: redpanda
     #ports:
-      # not needed because communication works via docker network
-      #- "127.0.0.1:9092:9092"
+      #- "127.0.0.1:9092:9092" # kafka api - not needed because communication works via docker network
+      #- "127.0.0.1:9644:9644" # admin http api - enable if you like
     command: >
       redpanda start
       --overprovisioned
