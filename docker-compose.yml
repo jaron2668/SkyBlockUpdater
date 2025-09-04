@@ -46,9 +46,9 @@ services:
       - redpanda
       - postgres_db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/${POSTGRES_DB:-skyblock_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-skyblock_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-super_secure_password123}
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
     networks:
       - backend
