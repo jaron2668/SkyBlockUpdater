@@ -2,23 +2,18 @@ package io.github.jaron2668.skyblockupdater.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.jaron2668.skyblockupdater.Application;
 import io.github.jaron2668.skyblockupdater.model.Auction;
 import io.github.jaron2668.skyblockupdater.util.AttributeParser;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuctionFetcherService {
@@ -30,12 +25,12 @@ public class AuctionFetcherService {
         URL_ENDED = "https://api.hypixel.net/v2/skyblock/auctions_ended";
     }
 
-    private final String API_KEY;
-
     private final HttpClient httpClient;
 
-    public AuctionFetcherService(@Value("${hypixel.api-key}") String apiKey) {
-        API_KEY = apiKey;
+    private long lastUpdatedActive = 0;
+    private long lastUpdatedEnded = 0;
+
+    public AuctionFetcherService() {
         httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
@@ -46,20 +41,31 @@ public class AuctionFetcherService {
         ObjectMapper mapper = new ObjectMapper();
         int page = 0;
         boolean morePages = true;
+        long newUpdatedTime = 0;
 
         while (morePages) {
             try {
                 String json = fetchPageJson(page);
                 JsonNode root = mapper.readTree(json);
                 JsonNode auctionArray = root.get("auctions");
-                // TODO: save lastUpdated and compare first for better performance
+
+                // check if whole page did not change
+                if (lastUpdatedActive >= root.get("lastUpdated").asLong())
+                    continue;
+
                 for (JsonNode node : auctionArray) {
                     if(!node.has("bin") || !node.get("bin").asBoolean())
                         continue;
 
+                    // check if auction is not new
+                    if(lastUpdatedActive >= node.get("last_updated").asLong())
+                        continue;
+
+
                     auctions.add(createActiveAuction(node));
                 }
 
+                newUpdatedTime = Math.max(newUpdatedTime, root.get("lastUpdated").asLong());
                 int currentPage = root.get("page").asInt();
                 int totalPages = root.get("totalPages").asInt();
                 morePages = currentPage < totalPages - 1;
@@ -69,6 +75,9 @@ public class AuctionFetcherService {
                 morePages = false;
             }
         }
+
+        // set lastUpdated to max of page update times
+        lastUpdatedActive = newUpdatedTime;
 
         return auctions;
     }
@@ -109,6 +118,8 @@ public class AuctionFetcherService {
     public List<JsonNode> fetchEndedAuctions() {
         List<JsonNode> auctions = new ArrayList<>();
         try {
+            // Request ended auctions from hypixel api
+            // URI uri = new URI(URL_ENDED + "&key=" + API_KEY);
             URI uri = new URI(URL_ENDED); // seems like v2/skyblock/auctions_ended doesn't need an api key to access
             HttpRequest request = HttpRequest.newBuilder(uri)
                     .timeout(Duration.ofSeconds(5))
@@ -122,15 +133,23 @@ public class AuctionFetcherService {
             String json = response.body();
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(json);
+
+            // check if whole page did not change
+            if (lastUpdatedEnded >= root.get("lastUpdated").asLong())
+                return Collections.emptyList();
+
             JsonNode auctionArray = root.get("auctions");
-            // TODO: compare lastUpdated
 
             for (JsonNode node : auctionArray) {
-                if(!node.has("bin") || !node.get("bin").asBoolean()) // TODO: maybe allow normal auctions too
+                // check if auction is not new
+                if(lastUpdatedEnded >= node.get("timestamp").asLong())
                     continue;
 
                 auctions.add(node);
             }
+
+            // update lastUpdated to current update time
+            lastUpdatedEnded = root.get("lastUpdated").asLong();
         } catch (Exception e) {
             e.printStackTrace();
         }

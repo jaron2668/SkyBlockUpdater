@@ -27,7 +27,6 @@ This project is a Java 21 microservice for my Hypixel Skyblock mod. It periodica
 ## Prerequisites
 
 - Docker & Docker Compose installed
-- Valid Hypixel API key (can be obtained from [Hypixel API docs](https://api.hypixel.net/))
 
 ---
 
@@ -45,7 +44,6 @@ Create a `.env` file in the root directory with the following content, replacing
     POSTGRES_DB=hypixel_db
     POSTGRES_USER=hypixel_user
     POSTGRES_PASSWORD=supersecret
-    HYPIXEL_API_KEY=your_api_key_here
 
 > No quotes needed unless your values contain spaces or special characters.
 
@@ -86,7 +84,6 @@ The database will be accessible at:
     - `POSTGRES_DB` — PostgreSQL database name
     - `POSTGRES_USER` — PostgreSQL username
     - `POSTGRES_PASSWORD` — PostgreSQL password
-    - `HYPIXEL_API_KEY` — Your Hypixel API key
 - Database connection configured via Spring Boot datasource environment variables.
 
 ---

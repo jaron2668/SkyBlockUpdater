@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Service
 public class AuctionProcessorService {
-
     @Autowired
     private AuctionDao auctionDao;
 
@@ -41,7 +40,7 @@ public class AuctionProcessorService {
      */
     public void processEndedAuctions(List<JsonNode> auctionsJsons) {
         for (JsonNode json : auctionsJsons) {
-            boolean bought = json.has("buyer");
+            boolean bought = json.has("buyer") && !json.get("buyer").asText().isBlank(); // TODO: not really sure if this works because the documentation isn't very specific
             UUID uuid = AttributeParser.parseHypixelUuid(json.get("auction_id").asText());
             Instant timeEnded = Instant.ofEpochMilli(json.get("timestamp").asLong());
 

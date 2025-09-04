@@ -42,7 +42,7 @@ public class AuctionFetcherServiceTest {
                 }
                 """;
 
-        AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
+        AuctionFetcherService fetcherService = new AuctionFetcherService() {
             @Override
             protected String fetchPageJson(int page) {
                 return sampleJson;
@@ -76,7 +76,7 @@ public class AuctionFetcherServiceTest {
         }
         """;
 
-        AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
+        AuctionFetcherService fetcherService = new AuctionFetcherService() {
             @Override
             protected String fetchPageJson(int page) {
                 return emptyAuctionsJson;
@@ -138,7 +138,7 @@ public class AuctionFetcherServiceTest {
         }
         """;
 
-        AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
+        AuctionFetcherService fetcherService = new AuctionFetcherService() {
             @Override
             protected String fetchPageJson(int page) {
                 return jsonWithNonBin;
@@ -151,7 +151,7 @@ public class AuctionFetcherServiceTest {
         // Only the one with bin = true should be included
         assertEquals(1, auctions.size());
 
-        Auction auction = auctions.get(0);
+        Auction auction = auctions.getFirst();
         assertEquals(200, auction.getPrice());
     }
 
@@ -159,7 +159,7 @@ public class AuctionFetcherServiceTest {
     public void testFetchActiveAuctions_malformedJsonStopsFetching() {
         String malformedJson = "{ this is not valid JSON }";
 
-        AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
+        AuctionFetcherService fetcherService = new AuctionFetcherService() {
             @Override
             protected String fetchPageJson(int page) {
                 return malformedJson;
@@ -250,7 +250,7 @@ public class AuctionFetcherServiceTest {
                 }
                 """;
 
-        AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
+        AuctionFetcherService fetcherService = new AuctionFetcherService() {
             @Override
             protected String fetchPageJson(int page) {
                 if (page == 0) return page0;
