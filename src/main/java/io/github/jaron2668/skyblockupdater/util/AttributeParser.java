@@ -185,7 +185,7 @@ public class AttributeParser {
 
     /**
      * Sets various item-related attributes of the given auction:
-     * {@link Auction#setReforge(String)}, {@link Auction#setImportantEnchantments(List)},
+     * {@link Auction#setItemId(String)}, {@link Auction#setReforge(String)}, {@link Auction#setImportantEnchantments(List)},
      * {@link Auction#setUpgradeLevel(int)}, {@link Auction#setHotPotatoCount(int)},
      * {@link Auction#setRarityUpgrades(int)}, {@link Auction#setArtOfWarCount(int)},
      * and {@link Auction#setArtOfPeaceCount(int)}, based on the {@link Auction#getItemBytes()}.
@@ -204,6 +204,9 @@ public class AttributeParser {
             CompoundTag item = (CompoundTag) itemList.get(0);
             CompoundTag tag = item.getCompoundTag("tag");
             CompoundTag extra = tag.getCompoundTag("ExtraAttributes");
+
+            // Set item id
+            auction.setItemId(extra.getString("id"));
 
             // Set reforge
             auction.setReforge(extra.getString("modifier"));

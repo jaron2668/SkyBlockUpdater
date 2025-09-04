@@ -7,7 +7,9 @@ import io.github.jaron2668.skyblockupdater.util.AttributeParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -15,14 +17,17 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class AuctionFetcherService {
 
-    private final String BASE_URL;
+    private final String BASE_URL_ACTIVE;
+    private final String URL_ENDED;
     {
-        BASE_URL = "https://api.hypixel.net/v2/skyblock/auctions?page=";
+        BASE_URL_ACTIVE = "https://api.hypixel.net/v2/skyblock/auctions?page=";
+        URL_ENDED = "https://api.hypixel.net/v2/skyblock/auctions_ended";
     }
 
     private final String API_KEY;
@@ -47,7 +52,7 @@ public class AuctionFetcherService {
                 String json = fetchPageJson(page);
                 JsonNode root = mapper.readTree(json);
                 JsonNode auctionArray = root.get("auctions");
-
+                // TODO: save lastUpdated and compare first for better performance
                 for (JsonNode node : auctionArray) {
                     if(!node.has("bin") || !node.get("bin").asBoolean())
                         continue;
@@ -70,7 +75,7 @@ public class AuctionFetcherService {
 
     protected String fetchPageJson(int page) throws Exception { // protected it can be mocked
         // URI uri = new URI(BASE_URL + page + "&key=" + API_KEY);
-        URI uri = new URI(BASE_URL + page); // seems like v2/skyblock/auctions doesn't need an api key to access
+        URI uri = new URI(BASE_URL_ACTIVE + page); // seems like v2/skyblock/auctions doesn't need an api key to access
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .timeout(Duration.ofSeconds(5))
                 .GET()
@@ -89,8 +94,6 @@ public class AuctionFetcherService {
         Auction auction = new Auction();
 
         auction.setId(AttributeParser.parseHypixelUuid(auctionJson.get("uuid").asText()));
-        auction.setItemId(auctionJson.get("item_id").asText());
-        auction.setItemName(auctionJson.get("item_name").asText());
         auction.setItemBytes(auctionJson.get("item_bytes").asText());
         auction.setPrice(auctionJson.get("starting_bid").asLong());
         auction.setStartTime(Instant.ofEpochMilli(auctionJson.get("start").asLong()));
@@ -100,5 +103,38 @@ public class AuctionFetcherService {
         AttributeParser.parseAttributes(auction);
 
         return auction;
+    }
+
+
+    public List<JsonNode> fetchEndedAuctions() {
+        List<JsonNode> auctions = new ArrayList<>();
+        try {
+            URI uri = new URI(URL_ENDED); // seems like v2/skyblock/auctions_ended doesn't need an api key to access
+            HttpRequest request = HttpRequest.newBuilder(uri)
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Failed to ended auctions: " + response.statusCode());
+            }
+
+            String json = response.body();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(json);
+            JsonNode auctionArray = root.get("auctions");
+            // TODO: compare lastUpdated
+
+            for (JsonNode node : auctionArray) {
+                if(!node.has("bin") || !node.get("bin").asBoolean()) // TODO: maybe allow normal auctions too
+                    continue;
+
+                auctions.add(node);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return auctions;
     }
 }

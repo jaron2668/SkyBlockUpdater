@@ -9,7 +9,6 @@ import java.util.List;
 public class Auction {
     private UUID id;
     private String itemId;
-    private String itemName;
     private String itemBytes; // raw B64 NBT - other attributes are extracted from this - mostly saved for testing purposes
     private Instant startTime;
     private Instant endTime;
@@ -37,14 +36,6 @@ public class Auction {
 
     public void setItemId(String itemId) {
         this.itemId = itemId;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
     }
 
     public String getItemBytes() {

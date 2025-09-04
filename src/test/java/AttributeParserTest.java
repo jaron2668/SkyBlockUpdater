@@ -30,6 +30,7 @@ public class AttributeParserTest {
         AttributeParser.parseAttributes(auction);
 
 
+        assertEquals("AXE_OF_THE_SHREDDED", auction.getItemId());
         assertEquals("withered", auction.getReforge());
 
         List<Enchantment> enchants = auction.getImportantEnchantments();

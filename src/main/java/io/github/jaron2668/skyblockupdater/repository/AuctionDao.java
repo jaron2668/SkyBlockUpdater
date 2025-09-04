@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +29,6 @@ public class AuctionDao {
             CREATE TABLE auctions_active (
                 id UUID PRIMARY KEY,
                 item_id TEXT NOT NULL,
-                item_name TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
                 start_time TIMESTAMPTZ NOT NULL,
                 end_time TIMESTAMPTZ NOT NULL,
@@ -44,14 +44,12 @@ public class AuctionDao {
             CREATE TABLE IF NOT EXISTS auctions_ended (
                 id UUID PRIMARY KEY,
                 item_id TEXT NOT NULL,
-                item_name TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
-                start_time TIMESTAMPTZ NOT NULL,
-                end_time TIMESTAMPTZ NOT NULL,
+                time_ended TIMESTAMPTZ NOT NULL,
                 price BIGINT NOT NULL,
                 upgrade_level INTEGER NOT NULL,
                 reforge TEXT NOT NULL,
-                rarity TEXT NOT NULL,
+                rarity TEXT,
                 hot_potato_count INTEGER NOT NULL,
                 art_of_war_count INTEGER NOT NULL,
                 art_of_peace_count INTEGER NOT NULL,
@@ -88,7 +86,6 @@ public class AuctionDao {
             INSERT INTO auctions_active (
                 id,
                 item_id,
-                item_name,
                 item_bytes,
                 start_time,
                 end_time,
@@ -107,7 +104,6 @@ public class AuctionDao {
         jdbc.update(insertAuction,
                 auction.getId(),
                 auction.getItemId(),
-                auction.getItemName(),
                 auction.getItemBytes(),
                 Timestamp.from(auction.getStartTime()),
                 Timestamp.from(auction.getEndTime()),
@@ -141,21 +137,22 @@ public class AuctionDao {
     }
 
     /**
-     * End an active auction
-     * Removes the auction from auctions_active and inserts it into auctions_ended
+     * End an active auction when it was bought
+     * Removes the auction from auctions_active and inserts it into auctions_ended for later use
      * @param auctionUUID UUID of auction which has ended
+     * @param timeEnded {@link Instant} where auction was bought
      */
     @Transactional
-    public void endAuction(UUID auctionUUID) {
+    public void moveAuctionToEnded(UUID auctionUUID, Instant timeEnded) {
         // Copy auction to auction_ended
-        String moveAuction = """
+        String copyAuction = """
             INSERT INTO auctions_ended (
-                id, item_id, item_name, item_bytes, start_time, end_time,
+                id, item_id, item_bytes, start_time, end_time, time_ended,
                 price, upgrade_level, reforge, rarity,
                 hot_potato_count, art_of_war_count, art_of_peace_count, rarity_upgrades
             )
             SELECT
-                id, item_id, item_name, item_bytes, start_time, end_time,
+                id, item_id, item_bytes, ?,
                 price, upgrade_level, reforge, rarity,
                 hot_potato_count, art_of_war_count, art_of_peace_count, rarity_upgrades
             FROM auctions_active
@@ -163,21 +160,89 @@ public class AuctionDao {
         """;
 
         // Copy enchantments to enchantments_ended
-        String moveEnchantments = """
+        String copyEnchantments = """
             INSERT INTO enchantments_ended (id, enchantment, level)
             SELECT id, enchantment, level
             FROM enchantments_active
             WHERE id = ?
         """;
 
+        jdbc.update(copyAuction, timeEnded, auctionUUID);
+        jdbc.update(copyEnchantments, auctionUUID);
+
+        deleteActiveAuction(auctionUUID);
+    }
+
+    /**
+     * Saves a bought auction that was not tracked before
+     * @param auction auction to save
+     */
+    @Transactional
+    public void saveEndedAuction(Auction auction, Instant timeEnded) {
+        String insertAuction = """
+            INSERT INTO auctions_ended (
+                id,
+                item_id,
+                item_bytes,
+                time_ended,
+                price,
+                upgrade_level,
+                reforge,
+                rarity,
+                hot_potato_count,
+                art_of_war_count,
+                art_of_peace_count,
+                rarity_upgrades
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (id) DO NOTHING
+        """;
+
+        jdbc.update(insertAuction,
+                auction.getId(),
+                auction.getItemId(),
+                auction.getItemBytes(),
+                Timestamp.from(timeEnded),
+                auction.getPrice(),
+                auction.getUpgradeLevel(),
+                auction.getReforge(),
+                auction.getRarity(),
+                auction.getHotPotatoCount(),
+                auction.getArtOfWarCount(),
+                auction.getArtOfPeaceCount(),
+                auction.getRarityUpgrades()
+        );
+
+        List<Enchantment> enchantments = auction.getImportantEnchantments();
+        if(enchantments.isEmpty())
+            return;
+
+        String insertEnchantments = """
+            INSERT INTO TABLE enchantments_ended(id, enchantment, level)
+            VALUES (?, ?, ?)
+            ON CONFLICT DO NOTHING;
+        """;
+        UUID auctionId = auction.getId();
+        for (Enchantment enchantment : enchantments) {
+            jdbc.update(insertEnchantments,
+                    auctionId,
+                    enchantment.type().toString(),
+                    enchantment.level()
+            );
+        }
+    }
+
+    /**
+     * Deletes an active auction
+     * @param auctionUUID UUID of the auction which should be deleted
+     */
+    @Transactional
+    public void deleteActiveAuction(UUID auctionUUID) {
         // Delete from enchantments_active
         String deleteEnchantments = "DELETE FROM enchantments_active WHERE id = ?";
 
         // Delete from auction_active
         String deleteAuction = "DELETE FROM auctions_active WHERE id = ?";
 
-        jdbc.update(moveAuction, auctionUUID);
-        jdbc.update(moveEnchantments, auctionUUID);
         jdbc.update(deleteEnchantments, auctionUUID);
         jdbc.update(deleteAuction, auctionUUID);
     }

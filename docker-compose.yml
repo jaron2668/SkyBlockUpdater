@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda
+    #ports:
+      # not needed because communication works via docker network
+      #- "127.0.0.1:9092:9092"
+    command: >
+      redpanda start
+      --overprovisioned
+      --smp 1
+      --memory 512M
+      --reserve-memory 0M
+      --node-id 0
+      --check=false
+      --kafka-addr PLAINTEXT://0.0.0.0:9092
+    networks:
+      - backend
+
+  postgres_db:
+    image: postgres:15.3-alpine
+    container_name: skyblock-postgres
+    depends_on:
+      - redpanda
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Bind Postgres port 5432 only to localhost for access with db tools
+      - "127.0.0.1:5432:5432"
+    networks:
+      - backend
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  updater:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: skyblock-updater
+    depends_on:
+      - redpanda
+      - postgres_db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:

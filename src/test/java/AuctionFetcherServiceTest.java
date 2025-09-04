@@ -55,7 +55,6 @@ public class AuctionFetcherServiceTest {
         assertEquals(1, auctions.size());
 
         Auction auction = auctions.getFirst();
-        assertEquals("Azure Bluet", auction.getItemName());
         assertEquals(123456, auction.getPrice());
         assertEquals("409a1e0f-261a-4984-9493-278d6cd9305a", auction.getId().toString());
 
@@ -153,7 +152,6 @@ public class AuctionFetcherServiceTest {
         assertEquals(1, auctions.size());
 
         Auction auction = auctions.get(0);
-        assertEquals("Bin Item", auction.getItemName());
         assertEquals(200, auction.getPrice());
     }
 
@@ -265,8 +263,5 @@ public class AuctionFetcherServiceTest {
 
         assertNotNull(auctions);
         assertEquals(2, auctions.size());
-
-        assertEquals("Azure Bluet", auctions.get(0).getItemName());
-        assertEquals("Azure Bluet2", auctions.get(1).getItemName());
     }
 }
