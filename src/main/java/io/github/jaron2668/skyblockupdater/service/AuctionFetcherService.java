@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -90,6 +91,8 @@ public class AuctionFetcherService {
         auction.setItemId(auctionJson.get("item_id").asText());
         auction.setItemName(auctionJson.get("item_name").asText());
         auction.setPrice(auctionJson.get("starting_bid").asLong());
+        auction.setStartTime(Instant.ofEpochMilli(auctionJson.get("start").asLong()));
+        auction.setEndTime(Instant.ofEpochMilli(auctionJson.get("end").asLong()));
 
         AttributeParser.parseAttributes(auction,auctionJson);
 

@@ -10,7 +10,9 @@ public class Auction {
     private UUID id;
     private String itemId;
     private String itemName;
-    private List<Enchantment> importantEnchantments;
+    private Instant startTime;
+    private Instant endTime;
+    private long price;
     private int dungeonStars;
     private String reforge;
     private String rarity;
@@ -19,8 +21,7 @@ public class Auction {
     private boolean hasArtOfWar;
     private boolean hasArtOfPeace;
     private boolean isRecombobulated;
-    private long price;
-    private Instant endTime;
+    private List<Enchantment> importantEnchantments;
 
     public UUID getId() {
         return id;
@@ -60,6 +61,14 @@ public class Auction {
 
     public void setEndTime(Instant endTime) {
         this.endTime = endTime;
+    }
+
+    public Instant getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Instant startTime) {
+        this.startTime = startTime;
     }
 
     public List<Enchantment> getImportantEnchantments() {

@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+/**
+ * TODO: finish
+ */
 public class AttributeParser {
 
     private static final Pattern ART_OF_WAR_PATTERN = Pattern.compile("(?i)^Art of War$");
