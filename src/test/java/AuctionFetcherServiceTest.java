@@ -36,16 +36,12 @@ public class AuctionFetcherServiceTest {
                       "tier": "COMMON",
                       "starting_bid": 123456,
                       "bin": true,
-                      "item_bytes": {
-                        "type": 0,
-                        "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-                      }
+                      "item_bytes": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
                     }
                   ]
                 }
                 """;
 
-        // Subclass AuctionFetcherService to override fetchPageJson
         AuctionFetcherService fetcherService = new AuctionFetcherService("dummy-api-key") {
             @Override
             protected String fetchPageJson(int page) {
@@ -53,17 +49,19 @@ public class AuctionFetcherServiceTest {
             }
         };
 
-        // Run method under test
         List<Auction> auctions = fetcherService.fetchActiveAuctions();
 
-        // Assertions
         assertNotNull(auctions);
         assertEquals(1, auctions.size());
 
-        Auction auction = auctions.get(0);
+        Auction auction = auctions.getFirst();
         assertEquals("Azure Bluet", auction.getItemName());
         assertEquals(123456, auction.getPrice());
         assertEquals("409a1e0f-261a-4984-9493-278d6cd9305a", auction.getId().toString());
+
+        // Additional assertions to verify NBT parsed attributes
+        assertNotNull(auction.getReforge());
+        assertTrue(auction.getHotPotatoCount() >= 0);
     }
 
     @Test
@@ -99,7 +97,7 @@ public class AuctionFetcherServiceTest {
           "success": true,
           "page": 0,
           "totalPages": 0,
-          "totalAuctions": 1,
+          "totalAuctions": 3,
           "lastUpdated": 0,
           "auctions": [
             {
@@ -110,27 +108,27 @@ public class AuctionFetcherServiceTest {
               "bin": false
             },
             {
-                      "uuid": "409a1e0f261a49849493278d6cd9305a",
-                      "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "coop": [
-                        "347ef6c1daac45ed9d1fa02818cf0fb6"
-                      ],
-                      "start": 1573760802637,
-                      "end": 1573761102637,
-                      "item_name": "Bin Item",
-                      "item_id": "some_bin_item",
-                      "item_lore": "§f§lCOMMON",
-                      "extra": "Azure Bluet Red Rose",
-                      "category": "blocks",
-                      "tier": "COMMON",
-                      "starting_bid": 200,
-                      "bin": true,
-                      "item_bytes": {
-                        "type": 0,
-                        "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-                      }
-                    },
+              "uuid": "409a1e0f261a49849493278d6cd9305a",
+              "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "coop": [
+                "347ef6c1daac45ed9d1fa02818cf0fb6"
+              ],
+              "start": 1573760802637,
+              "end": 1573761102637,
+              "item_name": "Bin Item",
+              "item_id": "some_bin_item",
+              "item_lore": "§f§lCOMMON",
+              "extra": "Azure Bluet Red Rose",
+              "category": "blocks",
+              "tier": "COMMON",
+              "starting_bid": 200,
+              "bin": true,
+              "item_bytes": {
+                "type": 0,
+                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
+              }
+            },
             {
               "uuid": "347ef6c1daac45ed9d1fa02818cf0fb6",
               "item_name": "Missing Bin Item",
@@ -151,6 +149,7 @@ public class AuctionFetcherServiceTest {
         List<Auction> auctions = fetcherService.fetchActiveAuctions();
 
         assertNotNull(auctions);
+        // Only the one with bin = true should be included
         assertEquals(1, auctions.size());
 
         Auction auction = auctions.get(0);
@@ -187,27 +186,27 @@ public class AuctionFetcherServiceTest {
           "lastUpdated": 0,
           "auctions": [
             {
-                      "uuid": "229a1e0f261a49849493273333d9305a",
-                      "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "coop": [
-                        "347ef6c1daac45ed9d1fa02818cf0fb6"
-                      ],
-                      "start": 1573760802637,
-                      "end": 1573761102637,
-                      "item_name": "Azure Bluet",
-                      "item_id": "azure_bluet",
-                      "item_lore": "§f§lCOMMON",
-                      "extra": "Azure Bluet Red Rose",
-                      "category": "blocks",
-                      "tier": "COMMON",
-                      "starting_bid": 123456,
-                      "bin": true,
-                      "item_bytes": {
-                        "type": 0,
-                        "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-                      }
-                    }
+              "uuid": "229a1e0f261a49849493273333d9305a",
+              "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "coop": [
+                "347ef6c1daac45ed9d1fa02818cf0fb6"
+              ],
+              "start": 1573760802637,
+              "end": 1573761102637,
+              "item_name": "Azure Bluet",
+              "item_id": "azure_bluet",
+              "item_lore": "§f§lCOMMON",
+              "extra": "Azure Bluet Red Rose",
+              "category": "blocks",
+              "tier": "COMMON",
+              "starting_bid": 123456,
+              "bin": true,
+              "item_bytes": {
+                "type": 0,
+                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
+              }
+            }
           ]
         }
         """;
@@ -221,27 +220,27 @@ public class AuctionFetcherServiceTest {
           "lastUpdated": 0,
           "auctions": [
             {
-                      "uuid": "409a1e0f261a49849493278d6cd9305a",
-                      "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
-                      "coop": [
-                        "347ef6c1daac45ed9d1fa02818cf0fb6"
-                      ],
-                      "start": 1573760802637,
-                      "end": 1573761102637,
-                      "item_name": "Azure Bluet2",
-                      "item_id": "azure_bluet",
-                      "item_lore": "§f§lCOMMON",
-                      "extra": "Azure Bluet Red Rose",
-                      "category": "blocks",
-                      "tier": "COMMON",
-                      "starting_bid": 123456,
-                      "bin": true,
-                      "item_bytes": {
-                        "type": 0,
-                        "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-                      }
-                    }
+              "uuid": "409a1e0f261a49849493278d6cd9305a",
+              "auctioneer": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "profile_id": "347ef6c1daac45ed9d1fa02818cf0fb6",
+              "coop": [
+                "347ef6c1daac45ed9d1fa02818cf0fb6"
+              ],
+              "start": 1573760802637,
+              "end": 1573761102637,
+              "item_name": "Azure Bluet2",
+              "item_id": "azure_bluet",
+              "item_lore": "§f§lCOMMON",
+              "extra": "Azure Bluet Red Rose",
+              "category": "blocks",
+              "tier": "COMMON",
+              "starting_bid": 123456,
+              "bin": true,
+              "item_bytes": {
+                "type": 0,
+                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
+              }
+            }
           ]
         }
         """;
@@ -258,7 +257,7 @@ public class AuctionFetcherServiceTest {
             protected String fetchPageJson(int page) {
                 if (page == 0) return page0;
                 else if (page == 1) return page1;
-                else return pageError404; // no more pages
+                else return pageError404;
             }
         };
 
@@ -270,8 +269,4 @@ public class AuctionFetcherServiceTest {
         assertEquals("Azure Bluet", auctions.get(0).getItemName());
         assertEquals("Azure Bluet2", auctions.get(1).getItemName());
     }
-
-
-
 }
-

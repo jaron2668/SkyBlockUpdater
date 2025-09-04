@@ -10,17 +10,17 @@ public class Auction {
     private UUID id;
     private String itemId;
     private String itemName;
+    private String itemBytes; // raw B64 NBT - other attributes are extracted from this - mostly saved for testing purposes
     private Instant startTime;
     private Instant endTime;
     private long price;
-    private int dungeonStars;
+    private int upgradeLevel; // correspond to stars I guess?
     private String reforge;
     private String rarity;
-    private int hpbCount;
-    private int fpbCount;
-    private boolean hasArtOfWar;
-    private boolean hasArtOfPeace;
-    private boolean isRecombobulated;
+    private int hotPotatoCount;
+    private int artOfWarCount;
+    private int artOfPeaceCount;
+    private int rarityUpgrades;
     private List<Enchantment> importantEnchantments;
 
     public UUID getId() {
@@ -45,6 +45,14 @@ public class Auction {
 
     public void setItemName(String itemName) {
         this.itemName = itemName;
+    }
+
+    public String getItemBytes() {
+        return itemBytes;
+    }
+
+    public void setItemBytes(String itemBytes) {
+        this.itemBytes = itemBytes;
     }
 
     public long getPrice() {
@@ -79,12 +87,12 @@ public class Auction {
         this.importantEnchantments = importantEnchantments;
     }
 
-    public int getDungeonStars() {
-        return dungeonStars;
+    public int getUpgradeLevel() {
+        return upgradeLevel;
     }
 
-    public void setDungeonStars(int dungeonStars) {
-        this.dungeonStars = dungeonStars;
+    public void setUpgradeLevel(int upgradeLevel) {
+        this.upgradeLevel = upgradeLevel;
     }
 
     public String getReforge() {
@@ -104,50 +112,42 @@ public class Auction {
     }
 
     public boolean hasEnchant(Enchantment.EnchantmentType type) {
-        return importantEnchantments != null && importantEnchantments.stream().anyMatch(e -> e.getType() == type);
+        return importantEnchantments != null && importantEnchantments.stream().anyMatch(e -> e.type() == type);
     }
 
     public boolean isDungeonItem() {
-        return dungeonStars > 0;
+        return upgradeLevel > 0;
     }
 
-    public int getHpbCount() {
-        return hpbCount;
+    public int getHotPotatoCount() {
+        return hotPotatoCount;
     }
 
-    public void setHpbCount(int hpbCount) {
-        this.hpbCount = hpbCount;
+    public void setHotPotatoCount(int hotPotatoCount) {
+        this.hotPotatoCount = hotPotatoCount;
     }
 
-    public int getFpbCount() {
-        return fpbCount;
+    public int getArtOfWarCount() {
+        return artOfWarCount;
     }
 
-    public void setFpbCount(int fpbCount) {
-        this.fpbCount = fpbCount;
+    public void setArtOfWarCount(int artOfWarCount) {
+        this.artOfWarCount = artOfWarCount;
     }
 
-    public boolean hasArtOfWar() {
-        return hasArtOfWar;
+    public int getArtOfPeaceCount() {
+        return artOfPeaceCount;
     }
 
-    public void setHasArtOfWar(boolean hasArtOfWar) {
-        this.hasArtOfWar = hasArtOfWar;
+    public void setArtOfPeaceCount(int artOfPeaceCount) {
+        this.artOfPeaceCount = artOfPeaceCount;
     }
 
-    public boolean hasArtOfPeace() {
-        return hasArtOfPeace;
+    public int getRarityUpgrades() {
+        return rarityUpgrades;
     }
 
-    public void setHasArtOfPeace(boolean hasArtOfPeace) {
-        this.hasArtOfPeace = hasArtOfPeace;
-    }
-
-    public boolean isRecombobulated() {
-        return isRecombobulated;
-    }
-
-    public void setRecombobulated(boolean recombobulated) {
-        isRecombobulated = recombobulated;
+    public void setRarityUpgrades(int rarityUpgrades) {
+        this.rarityUpgrades = rarityUpgrades;
     }
 }

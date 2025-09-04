@@ -18,9 +18,9 @@ public class AuctionProcessorService {
 
     public void processAuctions(List<Auction> auctions) {
         for (Auction auction : auctions) {
-            if (!auctionDao.existsById(auction.getId())) {
+            if (!auctionDao.existsActiveById(auction.getId())) {
                 kafkaPublisher.publish(auction);
-                auctionDao.save(auction);
+                auctionDao.saveActiveAuction(auction);
             }
         }
     }

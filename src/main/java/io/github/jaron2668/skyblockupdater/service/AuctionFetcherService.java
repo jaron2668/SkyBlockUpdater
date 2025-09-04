@@ -22,7 +22,7 @@ public class AuctionFetcherService {
 
     private final String BASE_URL;
     {
-        BASE_URL = "https://api.hypixel.net/skyblock/auctions?page=";
+        BASE_URL = "https://api.hypixel.net/v2/skyblock/auctions?page=";
     }
 
     private final String API_KEY;
@@ -69,7 +69,8 @@ public class AuctionFetcherService {
     }
 
     protected String fetchPageJson(int page) throws Exception { // protected it can be mocked
-        URI uri = new URI(BASE_URL + page + "&key=" + API_KEY);
+        // URI uri = new URI(BASE_URL + page + "&key=" + API_KEY);
+        URI uri = new URI(BASE_URL + page); // seems like v2/skyblock/auctions doesn't need an api key to access
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .timeout(Duration.ofSeconds(5))
                 .GET()
@@ -90,11 +91,13 @@ public class AuctionFetcherService {
         auction.setId(AttributeParser.parseHypixelUuid(auctionJson.get("uuid").asText()));
         auction.setItemId(auctionJson.get("item_id").asText());
         auction.setItemName(auctionJson.get("item_name").asText());
+        auction.setItemBytes(auctionJson.get("item_bytes").asText());
         auction.setPrice(auctionJson.get("starting_bid").asLong());
         auction.setStartTime(Instant.ofEpochMilli(auctionJson.get("start").asLong()));
         auction.setEndTime(Instant.ofEpochMilli(auctionJson.get("end").asLong()));
+        auction.setRarity(auctionJson.get("tier").asText());
 
-        AttributeParser.parseAttributes(auction,auctionJson);
+        AttributeParser.parseAttributes(auction);
 
         return auction;
     }

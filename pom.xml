@@ -20,6 +20,18 @@
         <spring-kafka.version>3.5.3</spring-kafka.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -59,11 +71,24 @@
                 <artifactId>jackson-databind</artifactId>
             </dependency>
 
+            <!-- NBT -->
+            <dependency>
+                <groupId>com.github.Querz</groupId>
+                <artifactId>NBT</artifactId>
+                <version>6.1</version>
+            </dependency>
+            <!-- Base64 Strings -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.10.0</version>
+            </dependency>
+
             <!-- testing -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>5.10.0</version>  <!-- Use the latest stable version -->
+                <version>5.10.0</version>
                 <scope>test</scope>
             </dependency>
     </dependencies>
