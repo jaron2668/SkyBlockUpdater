@@ -44,6 +44,8 @@ public class AuctionProcessorService {
             UUID uuid = AttributeParser.parseHypixelUuid(json.get("auction_id").asText());
             Instant timeEnded = Instant.ofEpochMilli(json.get("timestamp").asLong());
 
+            kafkaPublisher.publishEndedAuction(uuid);
+
             if(bought) {
                 if(auctionDao.existsActiveById(uuid)) {
                     auctionDao.moveAuctionToEnded(uuid, timeEnded);

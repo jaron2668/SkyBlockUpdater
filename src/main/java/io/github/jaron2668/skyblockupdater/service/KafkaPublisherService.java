@@ -31,7 +31,7 @@ public class KafkaPublisherService {
 
     public void publishEndedAuction(UUID auctionUuid) {
         try {
-            kafkaTemplate.send(TOPIC_NEW, auctionUuid.toString());
+            kafkaTemplate.send(TOPIC_ENDED, auctionUuid.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
