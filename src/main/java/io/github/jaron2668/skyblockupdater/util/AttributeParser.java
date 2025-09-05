@@ -9,6 +9,8 @@ import net.querz.nbt.tag.IntTag;
 import net.querz.nbt.tag.ListTag;
 import net.querz.nbt.tag.Tag;
 import org.apache.commons.text.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public class AttributeParser {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AttributeParser.class);
 
     /**
      * Map of enchantments to consider important
@@ -195,13 +199,13 @@ public class AttributeParser {
     public static void parseAttributes(Auction auction) {
         try {
             CompoundTag root = decodeItemBytes(auction.getItemBytes());
-            ListTag<Tag<?>> itemList = (ListTag<Tag<?>>) root.getListTag("i");
-            if (itemList == null || itemList.size() == 0) {
-                System.err.println("Item list is empty for auction: " + auction.getId());
+            ListTag<Tag<?>> nbtList = (ListTag<Tag<?>>) root.getListTag("i");
+            if (nbtList == null || nbtList.size() == 0) {
+                LOG.error("NBT list is empty for auction: {}", auction.getId());
                 return;
             }
 
-            CompoundTag item = (CompoundTag) itemList.get(0);
+            CompoundTag item = (CompoundTag) nbtList.get(0);
             CompoundTag tag = item.getCompoundTag("tag");
             CompoundTag extra = tag.getCompoundTag("ExtraAttributes");
 
@@ -216,7 +220,6 @@ public class AttributeParser {
             List<Enchantment> enchantments = new ArrayList<>();
             if (enchants != null) {
                 for (Map.Entry<String,Tag<?>> entry : enchants.entrySet()) {
-                    System.out.println("testing: " + entry.getKey());
                     if (IMPORTANT_ENCHANTMENTS.containsKey(entry.getKey())) {
                         Enchantment ench = IMPORTANT_ENCHANTMENTS.get(entry.getKey());
                         EnchantmentType type = ench.type();
@@ -245,8 +248,7 @@ public class AttributeParser {
             auction.setArtOfPeaceCount(extra.getInt("art_of_peace_count"));
 
         } catch (Exception e) {
-            System.err.println("Failed to parse item_bytes for auction ID: " + auction.getId());
-            e.printStackTrace();
+            LOG.error("Failed to parse item_bytes for auction ID {}: {}", auction.getId(), e.getMessage());
         }
     }
 
@@ -257,13 +259,10 @@ public class AttributeParser {
      * @throws IOException if root tag is not a {@link CompoundTag}
      */
     private static CompoundTag decodeItemBytes(String base64) throws IOException {
-        System.out.println("Decoding Base64: " + base64);
         // Unescape any unicode sequences first
         String cleanBase64 = StringEscapeUtils.unescapeJava(base64).trim();
-        System.out.println("Clean Base64: " + cleanBase64);
 
         byte[] compressed = Base64.getDecoder().decode(cleanBase64);
-        System.out.println("Compressed: " + compressed.length + " bytes");
 
         try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
              NBTInputStream nis = new NBTInputStream(gis)) {
@@ -271,7 +270,6 @@ public class AttributeParser {
             if (!(tag instanceof CompoundTag)) {
                 throw new IOException("Root tag is not a CompoundTag");
             }
-            System.out.println("Decoded to: " + ((CompoundTag) tag).toString());
             return (CompoundTag) tag;
         }
     }

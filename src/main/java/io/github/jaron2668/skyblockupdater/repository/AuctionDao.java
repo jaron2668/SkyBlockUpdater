@@ -3,6 +3,8 @@ package io.github.jaron2668.skyblockupdater.repository;
 import io.github.jaron2668.skyblockupdater.model.Auction;
 import io.github.jaron2668.skyblockupdater.model.Enchantment;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,8 @@ public class AuctionDao {
 
     private final JdbcTemplate jdbc;
 
+    private static final Logger LOG = LoggerFactory.getLogger(AuctionDao.class);
+
     public AuctionDao(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
@@ -24,8 +28,10 @@ public class AuctionDao {
 
     @PostConstruct
     public void createTableIfNotExists() {
-        String sql = """
-            DROP TABLE IF EXISTS auctions_active;
+        String dropTable = """
+            DROP TABLE IF EXISTS auctions_active CASCADE;
+        """;
+        String createAuctionActive = """
             CREATE TABLE auctions_active (
                 id UUID PRIMARY KEY,
                 item_id TEXT NOT NULL,
@@ -41,6 +47,8 @@ public class AuctionDao {
                 art_of_peace_count INTEGER NOT NULL,
                 rarity_upgrades INTEGER NOT NULL
             );
+        """;
+        String createAuctionsEnded = """
             CREATE TABLE IF NOT EXISTS auctions_ended (
                 id UUID PRIMARY KEY,
                 item_id TEXT NOT NULL,
@@ -55,25 +63,33 @@ public class AuctionDao {
                 art_of_peace_count INTEGER NOT NULL,
                 rarity_upgrades INTEGER NOT NULL
             );
+        """;
+        String createEnchantmentsActive = """
             CREATE TABLE IF NOT EXISTS enchantments_active (
                 id UUID PRIMARY KEY,
                 enchantment TEXT NOT NULL,
                 level INTEGER NOT NULL,
-                FOREIGN KEY (id) REFERENCES active_auctions(id)
+                FOREIGN KEY (id) REFERENCES auctions_active(id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
+        """;
+        String createEnchantmentsEnded = """
             CREATE TABLE IF NOT EXISTS enchantments_ended (
                 id UUID PRIMARY KEY,
                 enchantment TEXT NOT NULL,
                 level INTEGER NOT NULL,
-                FOREIGN KEY (id) REFERENCES ended_auctions(id)
+                FOREIGN KEY (id) REFERENCES auctions_ended(id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
-        jdbc.execute(sql);
+        jdbc.execute(dropTable);
+        jdbc.execute(createAuctionActive);
+        jdbc.execute(createAuctionsEnded);
+        jdbc.execute(createEnchantmentsActive);
+        jdbc.execute(createEnchantmentsEnded);
     }
 
     /**
@@ -97,7 +113,7 @@ public class AuctionDao {
                 art_of_war_count,
                 art_of_peace_count,
                 rarity_upgrades
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO NOTHING
         """;
 
@@ -122,7 +138,7 @@ public class AuctionDao {
             return;
 
         String insertEnchantments = """
-            INSERT INTO TABLE enchantments_active(id, enchantment, level)
+            INSERT INTO enchantments_active(id, enchantment, level)
             VALUES (?, ?, ?)
             ON CONFLICT DO NOTHING;
         """;
@@ -134,6 +150,8 @@ public class AuctionDao {
                     enchantment.level()
             );
         }
+
+        LOG.debug("Inserted new auction: {}", auction.getId().toString());
     }
 
     /**
@@ -147,7 +165,7 @@ public class AuctionDao {
         // Copy auction to auction_ended
         String copyAuction = """
             INSERT INTO auctions_ended (
-                id, item_id, item_bytes, start_time, end_time, time_ended,
+                id, item_id, item_bytes, time_ended,
                 price, upgrade_level, reforge, rarity,
                 hot_potato_count, art_of_war_count, art_of_peace_count, rarity_upgrades
             )
@@ -167,10 +185,12 @@ public class AuctionDao {
             WHERE id = ?
         """;
 
-        jdbc.update(copyAuction, timeEnded, auctionUUID);
+        jdbc.update(copyAuction, Timestamp.from(timeEnded), auctionUUID);
         jdbc.update(copyEnchantments, auctionUUID);
 
         deleteActiveAuction(auctionUUID);
+
+        LOG.debug("Moved auction to ended: {}", auctionUUID.toString());
     }
 
     /**
@@ -193,7 +213,7 @@ public class AuctionDao {
                 art_of_war_count,
                 art_of_peace_count,
                 rarity_upgrades
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO NOTHING
         """;
 
@@ -217,7 +237,7 @@ public class AuctionDao {
             return;
 
         String insertEnchantments = """
-            INSERT INTO TABLE enchantments_ended(id, enchantment, level)
+            INSERT INTO enchantments_ended(id, enchantment, level)
             VALUES (?, ?, ?)
             ON CONFLICT DO NOTHING;
         """;
@@ -229,6 +249,8 @@ public class AuctionDao {
                     enchantment.level()
             );
         }
+
+        LOG.debug("Inserted ended auction: {}", auction.getId().toString());
     }
 
     /**
@@ -254,7 +276,7 @@ public class AuctionDao {
      * @return true if auction exists
      */
     public boolean existsActiveById(UUID id) {
-        String sql = "SELECT COUNT(*) FROM active_auctions WHERE id = ?";
+        String sql = "SELECT COUNT(*) FROM auctions_active WHERE id = ?";
         Integer count = jdbc.queryForObject(sql, Integer.class, id);
         return count != null && count > 0;
     }

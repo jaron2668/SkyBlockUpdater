@@ -70,6 +70,10 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+            </dependency>
 
             <!-- NBT -->
             <dependency>
@@ -157,11 +161,18 @@
         </plugins>
 
         <resources>
-            <!-- add third party licenses -->
+            <!-- add licenses -->
             <resource>
                 <directory>${project.build.directory}</directory>
                 <includes>
                     <include>THIRD-PARTY-LICENSES.txt</include>
+                </includes>
+                <targetPath>META-INF/licenses</targetPath>
+            </resource>
+            <resource>
+                <directory>${project.build.directory}</directory>
+                <includes>
+                    <include>LICENSE.txt</include>
                 </includes>
                 <targetPath>META-INF/licenses</targetPath>
             </resource>

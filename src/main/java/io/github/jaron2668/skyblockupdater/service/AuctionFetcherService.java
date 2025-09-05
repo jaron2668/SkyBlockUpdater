@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jaron2668.skyblockupdater.Application;
 import io.github.jaron2668.skyblockupdater.model.Auction;
 import io.github.jaron2668.skyblockupdater.util.AttributeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -25,10 +27,13 @@ public class AuctionFetcherService {
         URL_ENDED = "https://api.hypixel.net/v2/skyblock/auctions_ended";
     }
 
+    private static final Logger LOG = LoggerFactory.getLogger(AuctionFetcherService.class);
+
     private final HttpClient httpClient;
 
-    private long lastUpdatedActive = 0;
-    private long lastUpdatedEnded = 0;
+
+    private long lastUpdatedActive = -1;
+    private long lastUpdatedEnded = -1;
 
     public AuctionFetcherService() {
         httpClient = HttpClient.newBuilder()
@@ -37,11 +42,14 @@ public class AuctionFetcherService {
     }
 
     public List<Auction> fetchActiveAuctions() {
+        LOG.info("Fetching active auctions.");
         List<Auction> auctions = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         int page = 0;
         boolean morePages = true;
         long newUpdatedTime = 0;
+
+        int auctionsFetched = 0;
 
         while (morePages) {
             try {
@@ -50,8 +58,13 @@ public class AuctionFetcherService {
                 JsonNode auctionArray = root.get("auctions");
 
                 // check if whole page did not change
-                if (lastUpdatedActive >= root.get("lastUpdated").asLong())
+                if (lastUpdatedActive >= root.get("lastUpdated").asLong()) {
+                    int currentPage = root.get("page").asInt();
+                    int totalPages = root.get("totalPages").asInt();
+                    morePages = currentPage < totalPages - 1;
+                    page++;
                     continue;
+                }
 
                 for (JsonNode node : auctionArray) {
                     if(!node.has("bin") || !node.get("bin").asBoolean())
@@ -61,7 +74,7 @@ public class AuctionFetcherService {
                     if(lastUpdatedActive >= node.get("last_updated").asLong())
                         continue;
 
-
+                    auctionsFetched++;
                     auctions.add(createActiveAuction(node));
                 }
 
@@ -75,6 +88,8 @@ public class AuctionFetcherService {
                 morePages = false;
             }
         }
+
+        LOG.info("Fetched {} pages, totaling {} new active auctions.", page, auctionsFetched);
 
         // set lastUpdated to max of page update times
         lastUpdatedActive = newUpdatedTime;
@@ -116,6 +131,7 @@ public class AuctionFetcherService {
 
 
     public List<JsonNode> fetchEndedAuctions() {
+        LOG.info("Fetching ended auctions.");
         List<JsonNode> auctions = new ArrayList<>();
         try {
             // Request ended auctions from hypixel api
@@ -127,8 +143,10 @@ public class AuctionFetcherService {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to ended auctions: " + response.statusCode());
+                throw new RuntimeException("Failed to fetch ended auctions: " + response.statusCode());
             }
+
+            int auctionsFetched = 0;
 
             String json = response.body();
             ObjectMapper mapper = new ObjectMapper();
@@ -145,9 +163,11 @@ public class AuctionFetcherService {
                 if(lastUpdatedEnded >= node.get("timestamp").asLong())
                     continue;
 
+                auctionsFetched++;
                 auctions.add(node);
             }
 
+            LOG.info("Fetched {} ended auctions.", auctionsFetched);
             // update lastUpdated to current update time
             lastUpdatedEnded = root.get("lastUpdated").asLong();
         } catch (Exception e) {

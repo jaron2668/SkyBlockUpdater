@@ -35,6 +35,7 @@ public class AuctionFetcherServiceTest {
                       "category": "blocks",
                       "tier": "COMMON",
                       "starting_bid": 123456,
+                      "last_updated": 1757028847193,
                       "bin": true,
                       "item_bytes": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
                     }
@@ -122,6 +123,7 @@ public class AuctionFetcherServiceTest {
               "category": "blocks",
               "tier": "COMMON",
               "starting_bid": 200,
+              "last_updated": 1757028847193,
               "bin": true,
               "item_bytes": {
                 "type": 0,
@@ -199,6 +201,7 @@ public class AuctionFetcherServiceTest {
               "category": "blocks",
               "tier": "COMMON",
               "starting_bid": 123456,
+              "last_updated": 1757028847193,
               "bin": true,
               "item_bytes": {
                 "type": 0,
@@ -215,7 +218,7 @@ public class AuctionFetcherServiceTest {
           "page": 1,
           "totalPages": 2,
           "totalAuctions": 2,
-          "lastUpdated": 0,
+          "lastUpdated": 12345,
           "auctions": [
             {
               "uuid": "409a1e0f261a49849493278d6cd9305a",
@@ -233,6 +236,7 @@ public class AuctionFetcherServiceTest {
               "category": "blocks",
               "tier": "COMMON",
               "starting_bid": 123456,
+              "last_updated": 1757028847193,
               "bin": true,
               "item_bytes": {
                 "type": 0,

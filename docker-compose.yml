@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redpanda:
     image: redpandadata/redpanda:latest
@@ -16,24 +14,23 @@ services:
       --node-id 0
       --check=false
       --kafka-addr PLAINTEXT://0.0.0.0:9092
+      --advertise-kafka-addr PLAINTEXT://redpanda:9092
     networks:
-      - backend
+      - skyblock-updater-backend
 
   postgres_db:
     image: postgres:15.3-alpine
     container_name: skyblock-postgres
-    depends_on:
-      - redpanda
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-skyblock_db}
+      POSTGRES_USER: ${POSTGRES_USER:-skyblock_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-super_secure_password123}
     ports:
       # Bind Postgres port 5432 only to localhost for access with db tools
       - "127.0.0.1:5432:5432"
     networks:
-      - backend
+      - skyblock-updater-backend
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -49,12 +46,19 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/${POSTGRES_DB:-skyblock_db}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-skyblock_user}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-super_secure_password123}
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SPRING_APPLICATION_JSON: >
+        {
+          "logging.level.root": "INFO",
+          "logging.level.org.apache.kafka": "WARN",
+          "logging.level.org.springframework.kafka": "WARN",
+          "logging.level.io.github.jaron2668": "INFO"
+        }
     networks:
-      - backend
+      - skyblock-updater-backend
 
 volumes:
   pgdata:
 
 networks:
-  backend:
+  skyblock-updater-backend:

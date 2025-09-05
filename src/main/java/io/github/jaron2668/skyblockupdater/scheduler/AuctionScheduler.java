@@ -21,13 +21,13 @@ public class AuctionScheduler {
     @Autowired
     private AuctionProcessorService processor;
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 1000 * 60 * 3)
     public void pollActiveAuctions() {
         List<Auction> auctions = fetcher.fetchActiveAuctions();
         processor.processNewAuctions(auctions);
     }
 
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRate = 1000 * 50)
     public void pollEndedAuctions() {
         List<JsonNode> auctions = fetcher.fetchEndedAuctions();
         processor.processEndedAuctions(auctions);

@@ -1,10 +1,11 @@
 
-Lists of 39 third-party dependencies.
+Lists of 40 third-party dependencies.
      (Eclipse Public License - v 1.0) (GNU Lesser General Public License) Logback Classic Module (ch.qos.logback:logback-classic:1.5.18 - http://logback.qos.ch/logback-classic)
      (Eclipse Public License - v 1.0) (GNU Lesser General Public License) Logback Core Module (ch.qos.logback:logback-core:1.5.18 - http://logback.qos.ch/logback-core)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.19.1 - https://github.com/FasterXML/jackson)
      (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.19.1 - https://github.com/FasterXML/jackson-core)
      (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.19.1 - https://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson datatype: JSR310 (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310)
      (MIT) NBT (com.github.Querz:NBT:6.1 - https://github.com/Querz/NBT)
      (BSD 2-Clause License) zstd-jni (com.github.luben:zstd-jni:1.5.6-4 - https://github.com/luben/zstd-jni)
      (The Apache Software License, Version 2.0) HikariCP (com.zaxxer:HikariCP:6.3.0 - https://github.com/brettwooldridge/HikariCP)

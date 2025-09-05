@@ -80,7 +80,7 @@ Redpanda admin http api (if uncommented in docker-compose) will be accessible at
 
 ## Usage
 
-- The updater periodically fetches bin auctions every 5 minutes and ended auctions every 15 minutes.
+- The updater periodically fetches bin auctions every 3 minutes and ended auctions every 50 seconds (because hypixel api endpoint only shows auctions that ended in the last 60 sec).
 - Produces Kafka events for other microservices to consume.
 ---
 
