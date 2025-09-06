@@ -1,9 +1,10 @@
-import io.github.jaron2668.skyblockupdater.model.Auction;
+import io.github.jaron2668.skyblockupdater.model.AuctionActive;
+import io.github.jaron2668.skyblockupdater.model.ToolItem;
 import io.github.jaron2668.skyblockupdater.service.AuctionFetcherService;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +38,7 @@ public class AuctionFetcherServiceTest {
                       "starting_bid": 123456,
                       "last_updated": 1757028847193,
                       "bin": true,
-                      "item_bytes": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
+                      "item_bytes": "H4sIAAAAAAAA/1VVz28bRRR+rt3EdlsKLRJCKmiAFqVKYxwnsUkPSK7jxIa0RbGbFCG0mt2d2KPs7qx2ZlPnyJUzlRCiN6QgLtw4cYrE/4HyhyC+2bUdY6288+Z978e89+bbKlGFCrJKRIVrdE36hXcLdL2j0sgUqlQ0fFShkoi8MdlfgW68iNxE8BPuBqJQpEpP+mI34CMN7b9VWvaljgN+BqN9lYgydhl9cHHe2uEhH4nH7OLcW23UG7UmVmJldaP+kBpQD0wiopEZ54CN7a3a+hyAxfYKjJp25a+srm8+pPdg00mkYYt+W/UH9KFFfwvc5ZvvsfpuLv78oxWRzx6ki/Mg/x+oNGBdbkTCDqF/ZOFPeCSYOmbtxIwTFStfs8P+TNkZ8zCWKmIvqWbFQPBTcWVrc5IeDxYtUlfqkB3SBoSdhMuI9ef4buQj9AAVsxnMbboT4aUGfumLTIpFItEEsWC5KxPB2joWnmH9/txyT/LIsK9kEGQOaQt7/TDmgYxGi7h9YcbYNGcLUfeVMhns0PZkez/1Tha0Aw8njUaLlRqMeRJHQtsC9emx3QmlTfsqznCc2iMGKvEXfA0TGQdiDV2XJ/ZQ9BE2D21lk6xWc+ChiFSoUgRA5+6h6T2B4qLZW/XLN79i0UJp2FiaGrXslOVavtrYqj+wWj8bD2YUhMY/f71mL5AN960qVK7Gq0ab+MezZztzcb6xurl1+dMfrKNClxt2JLWvQqgZHwGgzdQR3cH7/85qSPH+xXmz7Upb2MdsiPF5xewcY9IO+nu9Ievs9ztf0SewyJVnKk1YjweuSPxHLMvWdoAHAX0GkIhEKIVmyEwazWJuxkCJvJuownr9gU0tFIEQtDI/bw3ZR9qOkMRw2il+pZmnsuS3GxNawytLGiMU8ogzHvmZW+uzMWEzXe6NPoaMaYngSbA4EacSHakB9flKyCdsvTl5SHchPbWuOghjr+NGo456vINIRxJ2ifDZExWlmj61tU4wpTrrlL3nHi4rm1HAtKn0ftYWr8MN99ALi24F4lQEts6rs0t8wi/OE5ZLT78Z9vodNjh6frDDrgBlKj3joaAmtua5TGtu77k91WCMTV/YXjYvf/l98aEq3e5OTMLbBuPq4lrqIt1OOG76mZPGo4T7wrIf2PDtsTJOrAw3yvEshWL7dpVKIxHqMpW/bA++7h44dSrt9p91sdF5/vRJezjbqNBbaRQo70T4jg6U0ZY9ry2YzfFlujlbOvBNSzmEluiON+Unx8vm15nE7dMjPfjh7z8RL1S+PJaobfnVtA5FujU9gpPVFhGvl+1ngO62X3ad57vOsNd1Br2D7s5Od6dKN+2nAL0LBfpXpLKcUgvsikW644I6HXXs8Dl1QrFUpFIALsmXZW9Kkbm45GUMauMWaTnIGQhSqUjXtSUTrJcB02fxWEW54m4aGBmCtB0N+naEpe/cQUXPSCqXkS7IB9W0/JoHvHEM4nR4Rpx51lUx59fcf+V0xkS5ybLI6Xjqc2Qp1jnJKHZ6ptMpTeWIWyajN0dn9Jb7vGGuiDA3qugZe06P6GUfitxFedZHiFVggxldW1vCRKcpenRfeJsNt9lYXxPuMV/bXG/V19wW99fEdoM3/a3m8YbbLFEF1RLawCGm9PVv92q7dq6W8k+n/az/B5EqnO8FCAAA"
                     }
                   ]
                 }
@@ -50,18 +51,18 @@ public class AuctionFetcherServiceTest {
             }
         };
 
-        List<Auction> auctions = fetcherService.fetchActiveAuctions();
+        List<AuctionActive> auctions = fetcherService.fetchActiveAuctions();
 
         assertNotNull(auctions);
         assertEquals(1, auctions.size());
 
-        Auction auction = auctions.getFirst();
+        AuctionActive auction = auctions.getFirst();
         assertEquals(123456, auction.getPrice());
-        assertEquals("409a1e0f-261a-4984-9493-278d6cd9305a", auction.getId().toString());
+        assertEquals("409a1e0f-261a-4984-9493-278d6cd9305a", auction.getUuid().toString());
 
         // Additional assertions to verify NBT parsed attributes
-        assertNotNull(auction.getReforge());
-        assertTrue(auction.getHotPotatoCount() >= 0);
+        assertNotNull(((ToolItem)auction.getItem()).getReforge());
+        assertTrue(((ToolItem)auction.getItem()).getHotPotatoCount() >= 0);
     }
 
     @Test
@@ -84,7 +85,7 @@ public class AuctionFetcherServiceTest {
             }
         };
 
-        List<Auction> auctions = fetcherService.fetchActiveAuctions();
+        List<AuctionActive> auctions = fetcherService.fetchActiveAuctions();
 
         assertNotNull(auctions);
         assertTrue(auctions.isEmpty());
@@ -125,10 +126,7 @@ public class AuctionFetcherServiceTest {
               "starting_bid": 200,
               "last_updated": 1757028847193,
               "bin": true,
-              "item_bytes": {
-                "type": 0,
-                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-              }
+              "item_bytes": "H4sIAAAAAAAA/1VVz28bRRR+rt3EdlsKLRJCKmiAFqVKYxwnsUkPSK7jxIa0RbGbFCG0mt2d2KPs7qx2ZlPnyJUzlRCiN6QgLtw4cYrE/4HyhyC+2bUdY6288+Z978e89+bbKlGFCrJKRIVrdE36hXcLdL2j0sgUqlQ0fFShkoi8MdlfgW68iNxE8BPuBqJQpEpP+mI34CMN7b9VWvaljgN+BqN9lYgydhl9cHHe2uEhH4nH7OLcW23UG7UmVmJldaP+kBpQD0wiopEZ54CN7a3a+hyAxfYKjJp25a+srm8+pPdg00mkYYt+W/UH9KFFfwvc5ZvvsfpuLv78oxWRzx6ki/Mg/x+oNGBdbkTCDqF/ZOFPeCSYOmbtxIwTFStfs8P+TNkZ8zCWKmIvqWbFQPBTcWVrc5IeDxYtUlfqkB3SBoSdhMuI9ef4buQj9AAVsxnMbboT4aUGfumLTIpFItEEsWC5KxPB2joWnmH9/txyT/LIsK9kEGQOaQt7/TDmgYxGi7h9YcbYNGcLUfeVMhns0PZkez/1Tha0Aw8njUaLlRqMeRJHQtsC9emx3QmlTfsqznCc2iMGKvEXfA0TGQdiDV2XJ/ZQ9BE2D21lk6xWc+ChiFSoUgRA5+6h6T2B4qLZW/XLN79i0UJp2FiaGrXslOVavtrYqj+wWj8bD2YUhMY/f71mL5AN960qVK7Gq0ab+MezZztzcb6xurl1+dMfrKNClxt2JLWvQqgZHwGgzdQR3cH7/85qSPH+xXmz7Upb2MdsiPF5xewcY9IO+nu9Ievs9ztf0SewyJVnKk1YjweuSPxHLMvWdoAHAX0GkIhEKIVmyEwazWJuxkCJvJuownr9gU0tFIEQtDI/bw3ZR9qOkMRw2il+pZmnsuS3GxNawytLGiMU8ogzHvmZW+uzMWEzXe6NPoaMaYngSbA4EacSHakB9flKyCdsvTl5SHchPbWuOghjr+NGo456vINIRxJ2ifDZExWlmj61tU4wpTrrlL3nHi4rm1HAtKn0ftYWr8MN99ALi24F4lQEts6rs0t8wi/OE5ZLT78Z9vodNjh6frDDrgBlKj3joaAmtua5TGtu77k91WCMTV/YXjYvf/l98aEq3e5OTMLbBuPq4lrqIt1OOG76mZPGo4T7wrIf2PDtsTJOrAw3yvEshWL7dpVKIxHqMpW/bA++7h44dSrt9p91sdF5/vRJezjbqNBbaRQo70T4jg6U0ZY9ry2YzfFlujlbOvBNSzmEluiON+Unx8vm15nE7dMjPfjh7z8RL1S+PJaobfnVtA5FujU9gpPVFhGvl+1ngO62X3ad57vOsNd1Br2D7s5Od6dKN+2nAL0LBfpXpLKcUgvsikW644I6HXXs8Dl1QrFUpFIALsmXZW9Kkbm45GUMauMWaTnIGQhSqUjXtSUTrJcB02fxWEW54m4aGBmCtB0N+naEpe/cQUXPSCqXkS7IB9W0/JoHvHEM4nR4Rpx51lUx59fcf+V0xkS5ybLI6Xjqc2Qp1jnJKHZ6ptMpTeWIWyajN0dn9Jb7vGGuiDA3qugZe06P6GUfitxFedZHiFVggxldW1vCRKcpenRfeJsNt9lYXxPuMV/bXG/V19wW99fEdoM3/a3m8YbbLFEF1RLawCGm9PVv92q7dq6W8k+n/az/B5EqnO8FCAAA"
             },
             {
               "uuid": "347ef6c1daac45ed9d1fa02818cf0fb6",
@@ -147,13 +145,13 @@ public class AuctionFetcherServiceTest {
             }
         };
 
-        List<Auction> auctions = fetcherService.fetchActiveAuctions();
+        List<AuctionActive> auctions = fetcherService.fetchActiveAuctions();
 
         assertNotNull(auctions);
         // Only the one with bin = true should be included
         assertEquals(1, auctions.size());
 
-        Auction auction = auctions.getFirst();
+        AuctionActive auction = auctions.getFirst();
         assertEquals(200, auction.getPrice());
     }
 
@@ -167,8 +165,8 @@ public class AuctionFetcherServiceTest {
                 return malformedJson;
             }
         };
-        Logger.getLogger("Test").info("Expect logging of a com.fasterxml.jackson.core.JsonParseException. You can ignore this error");
-        List<Auction> auctions = fetcherService.fetchActiveAuctions();
+        LoggerFactory.getLogger(AuctionFetcherServiceTest.class).info("Expect logging of a com.fasterxml.jackson.core.JsonParseException. You can ignore this error");
+        List<AuctionActive> auctions = fetcherService.fetchActiveAuctions();
 
         // Since parsing failed immediately, it should return empty list
         assertNotNull(auctions);
@@ -203,10 +201,7 @@ public class AuctionFetcherServiceTest {
               "starting_bid": 123456,
               "last_updated": 1757028847193,
               "bin": true,
-              "item_bytes": {
-                "type": 0,
-                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-              }
+              "item_bytes": "H4sIAAAAAAAA/1VVz28bRRR+rt3EdlsKLRJCKmiAFqVKYxwnsUkPSK7jxIa0RbGbFCG0mt2d2KPs7qx2ZlPnyJUzlRCiN6QgLtw4cYrE/4HyhyC+2bUdY6288+Z978e89+bbKlGFCrJKRIVrdE36hXcLdL2j0sgUqlQ0fFShkoi8MdlfgW68iNxE8BPuBqJQpEpP+mI34CMN7b9VWvaljgN+BqN9lYgydhl9cHHe2uEhH4nH7OLcW23UG7UmVmJldaP+kBpQD0wiopEZ54CN7a3a+hyAxfYKjJp25a+srm8+pPdg00mkYYt+W/UH9KFFfwvc5ZvvsfpuLv78oxWRzx6ki/Mg/x+oNGBdbkTCDqF/ZOFPeCSYOmbtxIwTFStfs8P+TNkZ8zCWKmIvqWbFQPBTcWVrc5IeDxYtUlfqkB3SBoSdhMuI9ef4buQj9AAVsxnMbboT4aUGfumLTIpFItEEsWC5KxPB2joWnmH9/txyT/LIsK9kEGQOaQt7/TDmgYxGi7h9YcbYNGcLUfeVMhns0PZkez/1Tha0Aw8njUaLlRqMeRJHQtsC9emx3QmlTfsqznCc2iMGKvEXfA0TGQdiDV2XJ/ZQ9BE2D21lk6xWc+ChiFSoUgRA5+6h6T2B4qLZW/XLN79i0UJp2FiaGrXslOVavtrYqj+wWj8bD2YUhMY/f71mL5AN960qVK7Gq0ab+MezZztzcb6xurl1+dMfrKNClxt2JLWvQqgZHwGgzdQR3cH7/85qSPH+xXmz7Upb2MdsiPF5xewcY9IO+nu9Ievs9ztf0SewyJVnKk1YjweuSPxHLMvWdoAHAX0GkIhEKIVmyEwazWJuxkCJvJuownr9gU0tFIEQtDI/bw3ZR9qOkMRw2il+pZmnsuS3GxNawytLGiMU8ogzHvmZW+uzMWEzXe6NPoaMaYngSbA4EacSHakB9flKyCdsvTl5SHchPbWuOghjr+NGo456vINIRxJ2ifDZExWlmj61tU4wpTrrlL3nHi4rm1HAtKn0ftYWr8MN99ALi24F4lQEts6rs0t8wi/OE5ZLT78Z9vodNjh6frDDrgBlKj3joaAmtua5TGtu77k91WCMTV/YXjYvf/l98aEq3e5OTMLbBuPq4lrqIt1OOG76mZPGo4T7wrIf2PDtsTJOrAw3yvEshWL7dpVKIxHqMpW/bA++7h44dSrt9p91sdF5/vRJezjbqNBbaRQo70T4jg6U0ZY9ry2YzfFlujlbOvBNSzmEluiON+Unx8vm15nE7dMjPfjh7z8RL1S+PJaobfnVtA5FujU9gpPVFhGvl+1ngO62X3ad57vOsNd1Br2D7s5Od6dKN+2nAL0LBfpXpLKcUgvsikW644I6HXXs8Dl1QrFUpFIALsmXZW9Kkbm45GUMauMWaTnIGQhSqUjXtSUTrJcB02fxWEW54m4aGBmCtB0N+naEpe/cQUXPSCqXkS7IB9W0/JoHvHEM4nR4Rpx51lUx59fcf+V0xkS5ybLI6Xjqc2Qp1jnJKHZ6ptMpTeWIWyajN0dn9Jb7vGGuiDA3qugZe06P6GUfitxFedZHiFVggxldW1vCRKcpenRfeJsNt9lYXxPuMV/bXG/V19wW99fEdoM3/a3m8YbbLFEF1RLawCGm9PVv92q7dq6W8k+n/az/B5EqnO8FCAAA"
             }
           ]
         }
@@ -238,10 +233,7 @@ public class AuctionFetcherServiceTest {
               "starting_bid": 123456,
               "last_updated": 1757028847193,
               "bin": true,
-              "item_bytes": {
-                "type": 0,
-                "data": "H4sIAAAAAAAAAB2NQQqCQBhGv1ErHaKu0KoLtGtnarRIhTpA/OGfDIwZ4wxUF/IeHiyyto/3eBKIIJQEIDx4qsJaYJK07m6FhG+p9hEdVMV7TXU3Wh+JWaW6h6ZXhODYGg5/LeZDfxt6nZR5XhYhgoIaxmKE8dsZXu20YwuJZfa0hmJrjbo6y134f8pTll5O5TnbbgAP05Qaqhk+8AVIrd2eoAAAAA=="
-              }
+              "item_bytes": "H4sIAAAAAAAA/1VVz28bRRR+rt3EdlsKLRJCKmiAFqVKYxwnsUkPSK7jxIa0RbGbFCG0mt2d2KPs7qx2ZlPnyJUzlRCiN6QgLtw4cYrE/4HyhyC+2bUdY6288+Z978e89+bbKlGFCrJKRIVrdE36hXcLdL2j0sgUqlQ0fFShkoi8MdlfgW68iNxE8BPuBqJQpEpP+mI34CMN7b9VWvaljgN+BqN9lYgydhl9cHHe2uEhH4nH7OLcW23UG7UmVmJldaP+kBpQD0wiopEZ54CN7a3a+hyAxfYKjJp25a+srm8+pPdg00mkYYt+W/UH9KFFfwvc5ZvvsfpuLv78oxWRzx6ki/Mg/x+oNGBdbkTCDqF/ZOFPeCSYOmbtxIwTFStfs8P+TNkZ8zCWKmIvqWbFQPBTcWVrc5IeDxYtUlfqkB3SBoSdhMuI9ef4buQj9AAVsxnMbboT4aUGfumLTIpFItEEsWC5KxPB2joWnmH9/txyT/LIsK9kEGQOaQt7/TDmgYxGi7h9YcbYNGcLUfeVMhns0PZkez/1Tha0Aw8njUaLlRqMeRJHQtsC9emx3QmlTfsqznCc2iMGKvEXfA0TGQdiDV2XJ/ZQ9BE2D21lk6xWc+ChiFSoUgRA5+6h6T2B4qLZW/XLN79i0UJp2FiaGrXslOVavtrYqj+wWj8bD2YUhMY/f71mL5AN960qVK7Gq0ab+MezZztzcb6xurl1+dMfrKNClxt2JLWvQqgZHwGgzdQR3cH7/85qSPH+xXmz7Upb2MdsiPF5xewcY9IO+nu9Ievs9ztf0SewyJVnKk1YjweuSPxHLMvWdoAHAX0GkIhEKIVmyEwazWJuxkCJvJuownr9gU0tFIEQtDI/bw3ZR9qOkMRw2il+pZmnsuS3GxNawytLGiMU8ogzHvmZW+uzMWEzXe6NPoaMaYngSbA4EacSHakB9flKyCdsvTl5SHchPbWuOghjr+NGo456vINIRxJ2ifDZExWlmj61tU4wpTrrlL3nHi4rm1HAtKn0ftYWr8MN99ALi24F4lQEts6rs0t8wi/OE5ZLT78Z9vodNjh6frDDrgBlKj3joaAmtua5TGtu77k91WCMTV/YXjYvf/l98aEq3e5OTMLbBuPq4lrqIt1OOG76mZPGo4T7wrIf2PDtsTJOrAw3yvEshWL7dpVKIxHqMpW/bA++7h44dSrt9p91sdF5/vRJezjbqNBbaRQo70T4jg6U0ZY9ry2YzfFlujlbOvBNSzmEluiON+Unx8vm15nE7dMjPfjh7z8RL1S+PJaobfnVtA5FujU9gpPVFhGvl+1ngO62X3ad57vOsNd1Br2D7s5Od6dKN+2nAL0LBfpXpLKcUgvsikW644I6HXXs8Dl1QrFUpFIALsmXZW9Kkbm45GUMauMWaTnIGQhSqUjXtSUTrJcB02fxWEW54m4aGBmCtB0N+naEpe/cQUXPSCqXkS7IB9W0/JoHvHEM4nR4Rpx51lUx59fcf+V0xkS5ybLI6Xjqc2Qp1jnJKHZ6ptMpTeWIWyajN0dn9Jb7vGGuiDA3qugZe06P6GUfitxFedZHiFVggxldW1vCRKcpenRfeJsNt9lYXxPuMV/bXG/V19wW99fEdoM3/a3m8YbbLFEF1RLawCGm9PVv92q7dq6W8k+n/az/B5EqnO8FCAAA"
             }
           ]
         }
@@ -263,9 +255,11 @@ public class AuctionFetcherServiceTest {
             }
         };
 
-        List<Auction> auctions = fetcherService.fetchActiveAuctions();
+        List<AuctionActive> auctions = fetcherService.fetchActiveAuctions();
 
         assertNotNull(auctions);
         assertEquals(2, auctions.size());
     }
+
+    // TODO test auction ended
 }

@@ -2,9 +2,9 @@ package io.github.jaron2668.skyblockupdater.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.jaron2668.skyblockupdater.Application;
-import io.github.jaron2668.skyblockupdater.model.Auction;
-import io.github.jaron2668.skyblockupdater.util.AttributeParser;
+import io.github.jaron2668.skyblockupdater.model.AuctionActive;
+import io.github.jaron2668.skyblockupdater.model.AuctionEnded;
+import io.github.jaron2668.skyblockupdater.util.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,20 +14,19 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
 @Service
 public class AuctionFetcherService {
 
-    private final String BASE_URL_ACTIVE;
-    private final String URL_ENDED;
-    {
+    private static final Logger LOG = LoggerFactory.getLogger(AuctionFetcherService.class);
+    private static final String BASE_URL_ACTIVE;
+    private static final String URL_ENDED;
+
+    static {
         BASE_URL_ACTIVE = "https://api.hypixel.net/v2/skyblock/auctions?page=";
         URL_ENDED = "https://api.hypixel.net/v2/skyblock/auctions_ended";
     }
-
-    private static final Logger LOG = LoggerFactory.getLogger(AuctionFetcherService.class);
 
     private final HttpClient httpClient;
 
@@ -41,9 +40,9 @@ public class AuctionFetcherService {
                 .build();
     }
 
-    public List<Auction> fetchActiveAuctions() {
+    public List<AuctionActive> fetchActiveAuctions() {
         LOG.info("Fetching active auctions.");
-        List<Auction> auctions = new ArrayList<>();
+        List<AuctionActive> auctions = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         int page = 0;
         boolean morePages = true;
@@ -74,8 +73,12 @@ public class AuctionFetcherService {
                     if(lastUpdatedActive >= node.get("last_updated").asLong())
                         continue;
 
+                    AuctionActive auction = Parser.parseActiveAuction(node);
+                    if (auction == null)
+                        continue;
+
                     auctionsFetched++;
-                    auctions.add(createActiveAuction(node));
+                    auctions.add(auction);
                 }
 
                 newUpdatedTime = Math.max(newUpdatedTime, root.get("lastUpdated").asLong());
@@ -84,7 +87,7 @@ public class AuctionFetcherService {
                 morePages = currentPage < totalPages - 1;
                 page++;
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("Something went wrong while fetching page {}, aborting fetch.",page,e);
                 morePages = false;
             }
         }
@@ -114,25 +117,9 @@ public class AuctionFetcherService {
         return response.body();
     }
 
-    private Auction createActiveAuction(JsonNode auctionJson) {
-        Auction auction = new Auction();
-
-        auction.setId(AttributeParser.parseHypixelUuid(auctionJson.get("uuid").asText()));
-        auction.setItemBytes(auctionJson.get("item_bytes").asText());
-        auction.setPrice(auctionJson.get("starting_bid").asLong());
-        auction.setStartTime(Instant.ofEpochMilli(auctionJson.get("start").asLong()));
-        auction.setEndTime(Instant.ofEpochMilli(auctionJson.get("end").asLong()));
-        auction.setRarity(auctionJson.get("tier").asText());
-
-        AttributeParser.parseAttributes(auction);
-
-        return auction;
-    }
-
-
-    public List<JsonNode> fetchEndedAuctions() {
+    public List<AuctionEnded> fetchEndedAuctions() {
         LOG.info("Fetching ended auctions.");
-        List<JsonNode> auctions = new ArrayList<>();
+        List<AuctionEnded> auctions = new ArrayList<>();
         try {
             // Request ended auctions from hypixel api
             // URI uri = new URI(URL_ENDED + "&key=" + API_KEY);
@@ -162,16 +149,19 @@ public class AuctionFetcherService {
                 // check if auction is not new
                 if(lastUpdatedEnded >= node.get("timestamp").asLong())
                     continue;
+                AuctionEnded auction = Parser.parseEndedAuction(node);
+                if (auction == null)
+                    continue;
 
                 auctionsFetched++;
-                auctions.add(node);
+                auctions.add(auction);
             }
 
             LOG.info("Fetched {} ended auctions.", auctionsFetched);
             // update lastUpdated to current update time
             lastUpdatedEnded = root.get("lastUpdated").asLong();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Something went wrong while fetching ended auctions.",e);
         }
 
         return auctions;

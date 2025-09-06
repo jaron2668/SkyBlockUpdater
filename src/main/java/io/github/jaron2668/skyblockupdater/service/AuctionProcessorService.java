@@ -1,15 +1,13 @@
 package io.github.jaron2668.skyblockupdater.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.github.jaron2668.skyblockupdater.model.Auction;
+import io.github.jaron2668.skyblockupdater.model.AuctionActive;
+import io.github.jaron2668.skyblockupdater.model.AuctionEnded;
 import io.github.jaron2668.skyblockupdater.repository.AuctionDao;
-import io.github.jaron2668.skyblockupdater.util.AttributeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,50 +27,41 @@ public class AuctionProcessorService {
      *
      * @param auctions new auctions to process
      */
-    public void processNewAuctions(List<Auction> auctions) {
-        for (Auction auction : auctions) {
-            if (!auctionDao.existsActiveById(auction.getId())) {
-                kafkaPublisher.publishNewAuction(auction);
-                auctionDao.saveActiveAuction(auction);
-            }
+    public void processNewAuctions(List<AuctionActive> auctions) {
+        for (AuctionActive auction : auctions) {
+            kafkaPublisher.publishNewAuction(auction);
+            auctionDao.saveAuction(auction);
         }
     }
 
     /**
      * Processes ended auctions
      *
-     * @param auctionsJsons list of fetch action jsons
+     * @param auctions list of new ended auctions
      */
-    public void processEndedAuctions(List<JsonNode> auctionsJsons) {
+    public void processEndedAuctions(List<AuctionEnded> auctions) {
         int movedAuctions = 0;
         int newAuctions = 0;
         int deletedAuctions = 0;
 
-        for (JsonNode json : auctionsJsons) {
-            boolean bought = json.has("buyer") && !json.get("buyer").asText().isBlank(); // TODO: not really sure if this works because the documentation isn't very specific
-            UUID uuid = AttributeParser.parseHypixelUuid(json.get("auction_id").asText());
-            Instant timeEnded = Instant.ofEpochMilli(json.get("timestamp").asLong());
-
+        for (AuctionEnded auction : auctions) {
+            UUID uuid = auction.getUuid();
             kafkaPublisher.publishEndedAuction(uuid);
 
-            if(bought) {
-                if(auctionDao.existsActiveById(uuid)) {
-                    auctionDao.moveAuctionToEnded(uuid, timeEnded);
+            boolean exists = auctionDao.existsActiveByUuid(uuid);
+            if(auction.wasBought()) {
+                if (exists) {
+                    auctionDao.moveAuctionToBought(uuid,auction.getTimeEnded());
                     movedAuctions++;
                 } else {
-                    Auction auction = new Auction();
-                    auction.setId(uuid);
-                    auction.setItemBytes(json.get("item_bytes").asText());
-                    auction.setPrice(json.get("price").asLong());
-
-                    AttributeParser.parseAttributes(auction);
-
-                    auctionDao.saveEndedAuction(auction, timeEnded);
+                    auctionDao.saveBoughtAuction(auction);
                     newAuctions++;
                 }
             } else {
-                auctionDao.deleteActiveAuction(uuid);
-                deletedAuctions++;
+                if (exists) {
+                    auctionDao.deleteActiveAuctionAndItem(uuid);
+                    deletedAuctions++;
+                }
             }
         }
 
