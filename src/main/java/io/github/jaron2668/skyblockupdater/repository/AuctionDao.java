@@ -46,7 +46,8 @@ public class AuctionDao {
                 uuid UUID PRIMARY KEY,
                 item_id TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
-                rarity TEXT
+                rarity TEXT,
+                remaining_tags_dump TEXT NOT NULL
             );
         """;
 
@@ -236,7 +237,8 @@ public class AuctionDao {
                 uuid,
                 item_id,
                 item_bytes,
-                rarity
+                rarity,
+                remaining_tags_dump
             ) VALUES (?,?,?,?)
             ON CONFLICT (uuid) DO NOTHING;
         """;
@@ -245,7 +247,8 @@ public class AuctionDao {
                 item.getUuid(),
                 item.getItemId(),
                 item.getItemBytes(),
-                item.getRarity()
+                item.getRarity(),
+                item.getRemainingTagDump()
         );
 
         if (item instanceof ToolItem toolItem) {
@@ -357,7 +360,7 @@ public class AuctionDao {
     /**
      * End an active auction when it was bought
      * Removes the auction from AuctionActive and inserts it into AuctionsBought for later use
-     * @param auctionUUID UUID of auction which has ended
+     * @param auctionUUID UUID of auction which was bought
      * @param timeBought {@link Instant} where auction was bought
      */
     @Transactional

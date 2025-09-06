@@ -10,6 +10,7 @@ public class Item {
     private String rarity;
     private List<Enchantment> enchantments;
     private List<GemstoneSlot> gemstones;
+    private String remainingTagDump;
 
     public UUID getUuid() {
         return uuid;
@@ -57,5 +58,13 @@ public class Item {
 
     public void setGemstones(List<GemstoneSlot> gemstones) {
         this.gemstones = gemstones;
+    }
+
+    public String getRemainingTagDump() {
+        return remainingTagDump;
+    }
+
+    public void setRemainingTagDump(String remainingTagDump) {
+        this.remainingTagDump = remainingTagDump;
     }
 }

@@ -235,7 +235,7 @@ public class Parser {
         auction.setUuid(Parser.parseHypixelUuid(auctionJson.get("uuid").asText()));
         auction.setTimeEnded(Instant.ofEpochMilli(auctionJson.get("timestamp").asLong()));
         auction.setPrice(auctionJson.get("price").asLong());
-        // TODO: determine item type
+
         Item item = createItemFromBytes(auctionJson.get("item_bytes").asText());
         if (item == null) {
             return null;
@@ -276,6 +276,8 @@ public class Parser {
                 return null;
             }
 
+            List<String> processedExtraAttributes = new ArrayList<>();
+
             CompoundTag itemTag = (CompoundTag) nbtList.get(0);
             CompoundTag tag = itemTag.getCompoundTag("tag");
             CompoundTag extra = tag.getCompoundTag("ExtraAttributes");
@@ -297,13 +299,16 @@ public class Parser {
 
             // UUID
             item.setUuid(UUID.fromString(extra.getString("uuid")));
+            processedExtraAttributes.add("uuid");
             // ItemId
             item.setItemId(extra.getString("id"));
+            processedExtraAttributes.add("id");
             // Item Bytes
             item.setItemBytes(itemBytes);
 
             // Enchantments
             CompoundTag enchants = extra.getCompoundTag("enchantments");
+            processedExtraAttributes.add("enchantments");
             List<Enchantment> enchantments = new ArrayList<>();
             if (enchants != null) {
                 for (Map.Entry<String, Tag<?>> entry : enchants.entrySet()) {
@@ -322,6 +327,7 @@ public class Parser {
             // Gemstones
             List<GemstoneSlot> gemstones = new ArrayList<>();
             CompoundTag gems = extra.getCompoundTag("gems");
+            processedExtraAttributes.add("gems");
             if (gems != null) {
                 ListTag<StringTag> unlockedSlots = (ListTag<StringTag>) gems.getListTag("unlocked_slots");
                 if (unlockedSlots != null) {
@@ -342,22 +348,29 @@ public class Parser {
             if (item instanceof ToolItem toolItem) {
                 // Stars
                 toolItem.setUpgradeLevel(extra.getInt("upgrade_level"));
+                processedExtraAttributes.add("upgrade_level");
                 // Reforge
                 toolItem.setReforge(extra.getString("modifier"));
+                processedExtraAttributes.add("modifier");
                 // HPB/FPB
                 toolItem.setHotPotatoCount(extra.getInt("hot_potato_count"));
+                processedExtraAttributes.add("hot_potato_count");
                 // Recombobulated
                 toolItem.setRarityUpgrades(extra.getInt("rarity_upgrades"));
+                processedExtraAttributes.add("rarity_upgrades");
 
                 if (toolItem instanceof WeaponItem weaponItem) {
                     // Art of War
                     weaponItem.setArtOfWarCount(extra.getInt("art_of_war_count"));
+                    processedExtraAttributes.add("art_of_war_count");
                 } else if (toolItem instanceof ArmorItem armorItem) {
                     // Art of Peace
                     armorItem.setArtOfPeaceCount(extra.getInt("art_of_peace_count"));
+                    processedExtraAttributes.add("art_of_peace_count");
                 }
             } else if (item instanceof PetItem petItem) {
                 String petInfo = extra.getStringTag("petInfo").getValue();
+                processedExtraAttributes.add("petInfo");
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode petData = mapper.readTree(petInfo);
 
@@ -378,6 +391,24 @@ public class Parser {
                 // Current Pet Item
                 petItem.setPetItem(heldItem);
             }
+
+            // Special stuff - just save it to a string, might be useful to determine if item was exotic
+            StringBuilder remainingTagDump = new StringBuilder();
+            for (Map.Entry<String,Tag<?>> entry : extra.entrySet()) {
+                String key = entry.getKey();
+
+                if (processedExtraAttributes.contains(key))
+                    continue;
+
+                remainingTagDump.append(key)
+                        .append(": ")
+                        .append(entry.getValue())
+                        .append("\n");
+            }
+
+            item.setRemainingTagDump(remainingTagDump.toString());
+
+
             return item;
         } catch (Exception e) {
             LOG.error("Failed to parse item attributes. Returning null.", e);
