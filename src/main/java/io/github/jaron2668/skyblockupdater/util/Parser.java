@@ -207,8 +207,10 @@ public class Parser {
         auction.setPrice(auctionJson.get("starting_bid").asLong());
 
         Item item = createItemFromBytes(auctionJson.get("item_bytes").asText());
-        if (item == null)
+        if (item == null) {
+            LOG.error("Couldn't create item for active auction from json: {}", auctionJson);
             return null;
+        }
 
         item.setRarity(auctionJson.get("tier").asText());
 
@@ -232,12 +234,13 @@ public class Parser {
     public static AuctionEnded parseEndedAuction(JsonNode auctionJson) {
         AuctionEnded auction = new AuctionEnded();
 
-        auction.setUuid(Parser.parseHypixelUuid(auctionJson.get("uuid").asText()));
+        auction.setUuid(Parser.parseHypixelUuid(auctionJson.get("auction_id").asText()));
         auction.setTimeEnded(Instant.ofEpochMilli(auctionJson.get("timestamp").asLong()));
         auction.setPrice(auctionJson.get("price").asLong());
 
         Item item = createItemFromBytes(auctionJson.get("item_bytes").asText());
         if (item == null) {
+            LOG.error("Couldn't create item for ended auction from json: {}", auctionJson);
             return null;
         }
         //item.setRarity(auctionJson.get("tier").asText()); rarity not it api result
@@ -298,7 +301,12 @@ public class Parser {
 
 
             // UUID
-            item.setUuid(UUID.fromString(extra.getString("uuid")));
+            try {
+                item.setUuid(UUID.fromString(extra.getString("uuid")));
+            } catch (IllegalArgumentException e) {
+                LOG.debug("Attributes don't contain a uuid. This happens for some consumables/stackable items. Creating a new one and pray it doesn't exist for this item type in db.");
+                item.setUuid(UUID.randomUUID());
+            }
             processedExtraAttributes.add("uuid");
             // ItemId
             item.setItemId(extra.getString("id"));
@@ -324,6 +332,43 @@ public class Parser {
             }
             item.setEnchantments(enchantments);
 
+
+            // TODO breaks because gems sometimes look like this - hopefully fixed now
+            /*
+                "gems": {
+                                            "type": "CompoundTag",
+                                            "value": {
+                                                "JASPER_0": { "type": "StringTag", "value": "FINE" },
+                                                "COMBAT_0": { "type": "StringTag", "value": "FINE" },
+                                                "unlocked_slots": {
+                                                    "type": "ListTag",
+                                                    "value": {
+                                                        "type": "StringTag",
+                                                        "list": ["JASPER_0", "COMBAT_0"]
+                                                    }
+                                                },
+                                                "COMBAT_0_gem": { "type": "StringTag", "value": "JASPER" }
+                                            }
+                                        }
+             */ // and sometimes like this - thank you hypixel
+            /*
+            "gems":{
+                                            "type":"CompoundTag", "value":{
+                                                "JASPER_0":{
+                                                    "type":"CompoundTag", "value":{
+                                                        "uuid":{
+                                                            "type":"StringTag", "value":
+                                                            "11b428d7-642b-4d09-94fb-184f3fd5e4db"
+                                                        },"quality":{
+                                                            "type":"StringTag", "value":"FLAWLESS"
+                                                        }
+                                                    }
+                                                },"unlocked_slots":{
+                                                    "type":"ListTag", "value":{
+                                                        "type":"StringTag", "list":["JASPER_0"]}
+                                                }
+                                            }
+            */
             // Gemstones
             List<GemstoneSlot> gemstones = new ArrayList<>();
             CompoundTag gems = extra.getCompoundTag("gems");
@@ -331,13 +376,21 @@ public class Parser {
             if (gems != null) {
                 ListTag<StringTag> unlockedSlots = (ListTag<StringTag>) gems.getListTag("unlocked_slots");
                 if (unlockedSlots != null) {
-                    for (int i = 0; i < unlockedSlots.size(); i++) {
-                        StringTag stringTag = unlockedSlots.get(i);
-                        String slotName = stringTag.getValue();
-                        String gemPurity = gems.getString(slotName);
-                        String gemType = "";
-                        if (!gemPurity.isEmpty()) {
+                    for (int i = 0; i < unlockedSlots.size(); i++) { // cursed shit because gems with purity >= FLAWLESS have an uuid which changes the structure and gem structure already sucks to process
+                        String slotName = unlockedSlots.get(i).getValue();
+                        String gemType;
+                        if (gems.containsKey(slotName + "_gem")) {
                             gemType = gems.getString(slotName + "_gem");
+                        } else {
+                            gemType = slotName.split("_")[0];
+                        }
+                        String gemPurity = "";
+                        Tag<?> slotTag = gems.get(slotName);
+                        if (slotTag instanceof StringTag stag) {
+                            gemPurity = stag.getValue();
+
+                        } else if (slotTag instanceof CompoundTag ctag) {
+                            gemPurity = ctag.getString("quality");
                         }
                         gemstones.add(new GemstoneSlot(slotName, gemPurity, gemType));
                     }
@@ -380,7 +433,7 @@ public class Parser {
                 String heldItem = petData.path("heldItem").asText("");
                 long exp = petData.path("exp").asLong();
 
-                // Change ItemId to something more precise than just "PET"
+                // Change ItemId to something more precise than just "PET" using this extra data (why would you give all pets just the id PET in the first place hypixel?)
                 petItem.setItemId("PET_" + type);
                 // When dealing with pets we can actually extract the rarity from here in case it was an ended auction (which won't show item rarities)
                 petItem.setRarity(rarity);
@@ -394,7 +447,7 @@ public class Parser {
 
             // Special stuff - just save it to a string, might be useful to determine if item was exotic
             StringBuilder remainingTagDump = new StringBuilder();
-            for (Map.Entry<String,Tag<?>> entry : extra.entrySet()) {
+            for (Map.Entry<String, Tag<?>> entry : extra.entrySet()) {
                 String key = entry.getKey();
 
                 if (processedExtraAttributes.contains(key))
@@ -420,6 +473,7 @@ public class Parser {
     private static final Map<String, Integer> rarityOffset;
 
     static {
+        // exp needed for level-up, e.g. lvl2->3 takes expForLevel[2] exp. Just pray these values are correct
         expForLevel = new long[]{
                 100, 110, 120, 130, 145, 160, 175, 190, 210, 230, 250, 275, 300, 330, 360, 400,
                 440, 490, 540, 600, 660, 730, 800, 880, 960, 1050, 1150, 1260, 1380, 1510, 1650,
@@ -474,7 +528,7 @@ public class Parser {
             level++;
         }
 
-        // If not gdrag, cap at 100 (I hope there don't exist another pet which i don't know)
+        // If not gdrag, cap at 100 (I hope there don't exist another pet which I don't know)
         if (!petId.equals("PET_GOLDEN_DRAGON")) {
             return 100;
         }
@@ -507,11 +561,13 @@ public class Parser {
      * @throws IOException if root tag is not a {@link CompoundTag}
      */
     private static CompoundTag decodeItemBytes(String base64) throws IOException {
-        // Unescape any unicode sequences first
+        // Unescape any Unicode sequences first (sometimes breaks if I don't do this, don't really know what hypixel does with its encoding)
         String cleanBase64 = StringEscapeUtils.unescapeJava(base64).trim();
 
+        // Decode Base64
         byte[] compressed = Base64.getDecoder().decode(cleanBase64);
 
+        // Decompress GZIP
         try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
              NBTInputStream nis = new NBTInputStream(gis)) {
             Tag<?> tag = nis.readTag(Tag.DEFAULT_MAX_DEPTH).getTag();

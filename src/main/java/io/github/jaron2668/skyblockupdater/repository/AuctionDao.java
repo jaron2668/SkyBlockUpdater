@@ -28,138 +28,151 @@ public class AuctionDao {
 
 
     @PostConstruct
-    public void createTableIfNotExists() {
-        String deleteItems = """
-            WITH to_delete AS (
-                SELECT item_uuid FROM AuctionsActive
-            )
-            DELETE FROM Items
-            WHERE uuid IN (SELECT item_uuid FROM to_delete);
-        """;
-
-        String dropTable = """
-            DROP TABLE IF EXISTS AuctionsActive;
-        """;
-
+    public void setupTables() {
         String createItems = """
-            CREATE TABLE IF NOT EXISTS Items (
-                uuid UUID PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS items (
+                uuid UUID NOT NULL,
                 item_id TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
                 rarity TEXT,
-                remaining_tags_dump TEXT NOT NULL
+                remaining_tags_dump TEXT NOT NULL,
+                PRIMARY KEY (uuid,item_id)
             );
         """;
 
         String createToolItems = """
-            CREATE TABLE IF NOT EXISTS ToolItems (
-                uuid UUID PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS tool_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
                 upgrade_level INTEGER NOT NULL,
                 reforge TEXT NOT NULL,
                 hot_potato_count INTEGER NOT NULL,
                 rarity_upgrades INTEGER NOT NULL,
-                FOREIGN KEY (uuid) REFERENCES Items(uuid)
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
         String createWeaponItems = """
-            CREATE TABLE IF NOT EXISTS WeaponItems (
-                uuid UUID PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS weapon_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
                 art_of_war_count INTEGER NOT NULL,
-                FOREIGN KEY (uuid) REFERENCES ToolItems(uuid)
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES tool_items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
         String createArmorItems = """
-            CREATE TABLE IF NOT EXISTS ArmorItems (
-                uuid UUID PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS armor_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
                 art_of_peace_count INTEGER NOT NULL,
-                FOREIGN KEY (uuid) REFERENCES ToolItems(uuid)
-                    ON UPDATE CASCADE
-                    ON DELETE CASCADE
-            );
-        """;
-
-        String createEnchantments = """
-            CREATE TABLE IF NOT EXISTS Enchantments (
-                uuid UUID NOT NULL,
-                type TEXT NOT NULL
-                level INTEGER NOT NULL,
-                PRIMARY KEY (uuid,type),
-                FOREIGN KEY (uuid) REFERENCES Items(uuid)
-                    ON UPDATE CASCADE
-                    ON DELETE CASCADE
-            );
-        """;
-
-        String createGemstones = """
-            CREATE TABLE IF NOT EXISTS Gemstones (
-                uuid UUID NOT NULL,
-                slot_id TEXT NOT NULL,
-                gem_purity TEXT NOT NULL,
-                gem_type TEXT NOT NULL,
-                PRIMARY KEY (uuid,slot_id),
-                FOREIGN KEY (uuid) REFERENCES Items(uuid)
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES tool_items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
         String createPetItems = """
-            CREATE TABLE IF NOT EXISTS PetItems (
-                uuid UUID PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS pet_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
                 level INTEGER NOT NULL,
                 candy_count INTEGER NOT NULL,
                 pet_item TEXT NOT NULL,
-                FOREIGN KEY (uuid) REFERENCES Items(uuid)
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createEnchantments = """
+            CREATE TABLE IF NOT EXISTS enchantments (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                PRIMARY KEY (uuid,item_id,type),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createGemstones = """
+            CREATE TABLE IF NOT EXISTS gemstones (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                slot_id TEXT NOT NULL,
+                gem_purity TEXT NOT NULL,
+                gem_type TEXT NOT NULL,
+                PRIMARY KEY (uuid,item_id,slot_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
         String createAuctionsActive = """
-            CREATE TABLE auctions_active (
+            CREATE TABLE IF NOT EXISTS auctions_active (
                 uuid UUID PRIMARY KEY,
                 item_uuid UUID NOT NULL,
                 item_id TEXT NOT NULL,
                 start_time TIMESTAMPTZ NOT NULL,
                 end_time TIMESTAMPTZ NOT NULL,
                 price BIGINT NOT NULL,
-                FOREIGN KEY (item_uuid,item_id) REFERENCES Items(uuid,item_id)
+                FOREIGN KEY (item_uuid,item_id) REFERENCES items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE RESTRICT
             );
         """;
 
         String createAuctionsBought = """
-            CREATE TABLE IF NOT EXISTS AuctionsBought (
+            CREATE TABLE IF NOT EXISTS auctions_bought (
                 uuid UUID PRIMARY KEY,
                 item_uuid UUID NOT NULL,
                 item_id TEXT NOT NULL,
                 time_bought TIMESTAMPTZ NOT NULL,
                 price BIGINT NOT NULL,
                 was_bin BOOLEAN NOT NULL,
-                FOREIGN KEY (item_uuid,item_id) REFERENCES Items(uuid,item_id)
+                FOREIGN KEY (item_uuid,item_id) REFERENCES items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE RESTRICT
             );
         """;
+
+        String truncatePriorActiveAuctions = """
+            TRUNCATE TABLE auctions_active;
+        """;
+
+        String deleteUnusedItems = """
+            DELETE FROM items i
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM auctions_bought ab
+                        WHERE ab.item_uuid = i.uuid AND ab.item_id = i.item_id
+                    );
+        """;
+
         LOG.debug("Creating tables if not exist and dropping prior active auctions.");
-        jdbc.execute(deleteItems);
-        jdbc.execute(dropTable);
         jdbc.execute(createItems);
         jdbc.execute(createToolItems);
         jdbc.execute(createWeaponItems);
         jdbc.execute(createArmorItems);
+        jdbc.execute(createPetItems);
         jdbc.execute(createEnchantments);
         jdbc.execute(createGemstones);
-        jdbc.execute(createPetItems);
         jdbc.execute(createAuctionsActive);
         jdbc.execute(createAuctionsBought);
+        jdbc.execute(truncatePriorActiveAuctions);
+        jdbc.execute(deleteUnusedItems);
         LOG.debug("Finished creating tables and dropping auction.");
     }
 
@@ -174,7 +187,7 @@ public class AuctionDao {
         insertItem(item);
 
         String insertAuctionActive = """
-            INSERT INTO AuctionActive (
+            INSERT INTO auctions_active (
                 uuid,
                 item_uuid,
                 item_id,
@@ -209,7 +222,7 @@ public class AuctionDao {
         insertItem(item);
 
         String insertAuctionBought = """
-            INSERT INTO AuctionBought (
+            INSERT INTO auctions_bought (
                 uuid,
                 item_uuid,
                 item_id,
@@ -233,14 +246,14 @@ public class AuctionDao {
 
     private void insertItem(Item item) {
         String insertItem = """
-            INSERT INTO Items (
+            INSERT INTO items (
                 uuid,
                 item_id,
                 item_bytes,
                 rarity,
                 remaining_tags_dump
-            ) VALUES (?,?,?,?)
-            ON CONFLICT (uuid) DO NOTHING;
+            ) VALUES (?,?,?,?,?)
+            ON CONFLICT (uuid,item_id) DO NOTHING;
         """;
 
         jdbc.update(insertItem,
@@ -253,17 +266,19 @@ public class AuctionDao {
 
         if (item instanceof ToolItem toolItem) {
             String insertToolItem = """
-                INSERT INTO ToolItems (
+                INSERT INTO tool_items (
                     uuid,
+                    item_id,
                     upgrade_level,
                     reforge,
                     hot_potato_count,
                     rarity_upgrades
-                ) VALUES (?,?,?,?,?)
-                ON CONFLICT (uuid) DO NOTHING;
+                ) VALUES (?,?,?,?,?,?)
+                ON CONFLICT (uuid,item_id) DO NOTHING;
             """;
             jdbc.update(insertToolItem,
                     toolItem.getUuid(),
+                    toolItem.getItemId(),
                     toolItem.getUpgradeLevel(),
                     toolItem.getReforge(),
                     toolItem.getHotPotatoCount(),
@@ -272,43 +287,49 @@ public class AuctionDao {
 
             if (toolItem instanceof WeaponItem weaponItem) {
                 String insertWeaponItem = """
-                    INSERT INTO WeaponItems (
+                    INSERT INTO weapon_items (
                         uuid,
+                        item_id,
                         art_of_war_count
-                    ) VALUES (?,?)
-                    ON CONFLICT (uuid) DO NOTHING;
+                    ) VALUES (?,?,?)
+                    ON CONFLICT (uuid,item_id) DO NOTHING;
                 """;
                 jdbc.update(insertWeaponItem,
-                        weaponItem.getUuid()
-                        ,weaponItem.getArtOfWarCount()
+                        weaponItem.getUuid(),
+                        weaponItem.getItemId(),
+                        weaponItem.getArtOfWarCount()
                 );
 
             } else if (toolItem instanceof ArmorItem armorItem) {
                 String insertArmorItem = """
-                    INSERT INTO ArmorItems (
+                    INSERT INTO armor_items (
                         uuid,
+                        item_id,
                         art_of_peace_count
-                    ) VALUES (?,?)
-                    ON CONFLICT (uuid) DO NOTHING;
+                    ) VALUES (?,?,?)
+                    ON CONFLICT (uuid,item_id) DO NOTHING;
                 """;
                 jdbc.update(insertArmorItem,
                         armorItem.getUuid(),
+                        armorItem.getItemId(),
                         armorItem.getArtOfPeaceCount()
                 );
             }
 
         } else if (item instanceof PetItem petItem) {
             String insertPetItem = """
-                INSERT INTO PetItems (
+                INSERT INTO pet_items (
                     uuid,
+                    item_id,
                     level,
                     candy_count,
                     pet_item
-                ) VALUES (?,?,?,?)
-                ON CONFLICT (uuid) DO NOTHING;
+                ) VALUES (?,?,?,?,?)
+                ON CONFLICT (uuid,item_id) DO NOTHING;
             """;
             jdbc.update(insertPetItem,
                     petItem.getUuid(),
+                    petItem.getItemId(),
                     petItem.getLevel(),
                     petItem.getCandyCount(),
                     petItem.getPetItem()
@@ -318,17 +339,19 @@ public class AuctionDao {
         List<Enchantment> enchantments = item.getEnchantments();
         if (!enchantments.isEmpty()) {
             String insertEnchantment = """
-                INSERT INTO Enchantments (
+                INSERT INTO enchantments (
                     uuid,
+                    item_id,
                     type,
                     level
-                ) VALUES (?,?,?)
-                ON CONFLICT (uuid,type) DO NOTHING;
+                ) VALUES (?,?,?,?)
+                ON CONFLICT (uuid,item_id,type) DO NOTHING;
             """;
             for (Enchantment enchantment : enchantments) {
                 jdbc.update(insertEnchantment,
                         item.getUuid(),
-                        enchantment.type(),
+                        item.getItemId(),
+                        enchantment.type().toString(),
                         enchantment.level()
                 );
             }
@@ -337,17 +360,19 @@ public class AuctionDao {
         List<GemstoneSlot> gemstones = item.getGemstones();
         if (!gemstones.isEmpty()) {
             String insertGemstone = """
-                INSERT INTO Gemstones (
+                INSERT INTO gemstones (
                     uuid,
+                    item_id,
                     slot_id,
                     gem_purity,
                     gem_type
-                ) VALUES (?,?,?)
-                ON CONFLICT (uuid,slot_id) DO NOTHING;
+                ) VALUES (?,?,?,?,?)
+                ON CONFLICT (uuid,item_id,slot_id) DO NOTHING;
             """;
             for (GemstoneSlot gemstone : gemstones) {
                 jdbc.update(insertGemstone,
                         item.getUuid(),
+                        item.getItemId(),
                         gemstone.slotName(),
                         gemstone.gemPurity(),
                         gemstone.gemType()
@@ -366,7 +391,7 @@ public class AuctionDao {
     @Transactional
     public void moveAuctionToBought(UUID auctionUUID, Instant timeBought) {
         String copyAuction = """
-            INSERT INTO AuctionsBought (
+            INSERT INTO auctions_bought (
                 uuid,
                 item_uuid,
                 item_id,
@@ -376,8 +401,8 @@ public class AuctionDao {
             )
             SELECT
                 uuid,item_uuid,item_id,?,price,?
-            FROM AuctionsActive
-            WHERE id = ?
+            FROM auctions_active
+            WHERE uuid = ?
         """;
 
         jdbc.update(copyAuction,
@@ -398,7 +423,7 @@ public class AuctionDao {
      */
     @Transactional
     public void deleteActiveAuction(UUID auctionUUID) {
-        String deleteAuction = "DELETE FROM AuctionsActive WHERE uuid = ?";
+        String deleteAuction = "DELETE FROM auctions_active WHERE uuid = ?";
         jdbc.update(deleteAuction, auctionUUID);
     }
 
@@ -408,7 +433,7 @@ public class AuctionDao {
      */
     @Transactional
     public void deleteActiveAuctionAndItem(UUID auctionUuid) {
-        String sql = "SELECT item_uuid FROM AuctionsActive WHERE uuid = ?;";
+        String sql = "SELECT item_uuid FROM auctions_active WHERE uuid = ?;";
         UUID itemUuid;
         try {
             itemUuid = jdbc.queryForObject(sql, UUID.class, auctionUuid);
@@ -416,11 +441,11 @@ public class AuctionDao {
             LOG.warn("Couldn't access item_uuid from auction with uuid {} for removal. Skipping deletion.",auctionUuid);
             return;
         }
-        String deleteAuction = "DELETE FROM AuctionsActive WHERE uuid = ?;";
+        String deleteAuction = "DELETE FROM auctions_active WHERE uuid = ?;";
         jdbc.update(deleteAuction, auctionUuid);
 
         String deleteItem = """
-            DELETE FROM Items
+            DELETE FROM items
             WHERE uuid = ?;
         """;
 
@@ -434,7 +459,7 @@ public class AuctionDao {
      * @return true if auction exists
      */
     public boolean existsActiveByUuid(UUID uuid) {
-        String sql = "SELECT COUNT(*) FROM AuctionsActive WHERE uuid = ?";
+        String sql = "SELECT COUNT(*) FROM auctions_active WHERE uuid = ?";
         Integer count = jdbc.queryForObject(sql, Integer.class, uuid);
         return count != null && count > 0;
     }

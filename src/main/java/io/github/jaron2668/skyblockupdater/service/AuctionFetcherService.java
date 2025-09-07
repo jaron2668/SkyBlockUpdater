@@ -157,7 +157,7 @@ public class AuctionFetcherService {
                 auctions.add(auction);
             }
 
-            LOG.info("Fetched {} ended auctions.", auctionsFetched);
+            LOG.info("Fetched {} new ended auctions.", auctionsFetched);
             // update lastUpdated to current update time
             lastUpdatedEnded = root.get("lastUpdated").asLong();
         } catch (Exception e) {
