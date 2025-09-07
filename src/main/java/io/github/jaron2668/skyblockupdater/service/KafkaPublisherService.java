@@ -2,7 +2,7 @@ package io.github.jaron2668.skyblockupdater.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.github.jaron2668.skyblockupdater.model.AuctionActive;
+import io.github.jaron2668.skyblocksharedmodels.AuctionActive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;

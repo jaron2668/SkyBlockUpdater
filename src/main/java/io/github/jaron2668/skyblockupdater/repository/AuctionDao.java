@@ -1,6 +1,6 @@
 package io.github.jaron2668.skyblockupdater.repository;
 
-import io.github.jaron2668.skyblockupdater.model.*;
+import io.github.jaron2668.skyblocksharedmodels.*;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

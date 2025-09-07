@@ -29,6 +29,7 @@ in a PostgreSQL database and produces Kafka events for other microservices.
 ## Prerequisites
 
 - Docker & Docker Compose installed
+- [SkyblockSharedModels]("https://github.com/jaron2668/SkyblockSharedModels") installed into local Maven repository
 
 ---
 

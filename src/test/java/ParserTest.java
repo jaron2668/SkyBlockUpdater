@@ -1,8 +1,8 @@
-import io.github.jaron2668.skyblockupdater.model.Enchantment;
-import io.github.jaron2668.skyblockupdater.model.Enchantment.EnchantmentType;
-import io.github.jaron2668.skyblockupdater.model.GemstoneSlot;
-import io.github.jaron2668.skyblockupdater.model.ToolItem;
-import io.github.jaron2668.skyblockupdater.model.WeaponItem;
+import io.github.jaron2668.skyblocksharedmodels.Enchantment;
+import io.github.jaron2668.skyblocksharedmodels.Enchantment.EnchantmentType;
+import io.github.jaron2668.skyblocksharedmodels.GemstoneSlot;
+import io.github.jaron2668.skyblocksharedmodels.ToolItem;
+import io.github.jaron2668.skyblocksharedmodels.WeaponItem;
 import io.github.jaron2668.skyblockupdater.util.Parser;
 import org.junit.jupiter.api.Test;
 

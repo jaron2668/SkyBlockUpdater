@@ -1,5 +1,5 @@
-import io.github.jaron2668.skyblockupdater.model.AuctionActive;
-import io.github.jaron2668.skyblockupdater.model.ToolItem;
+import io.github.jaron2668.skyblocksharedmodels.AuctionActive;
+import io.github.jaron2668.skyblocksharedmodels.ToolItem;
 import io.github.jaron2668.skyblockupdater.service.AuctionFetcherService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;

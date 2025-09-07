@@ -1,5 +1,5 @@
 
-Lists of 40 third-party dependencies.
+Lists of 41 third-party dependencies.
      (Eclipse Public License - v 1.0) (GNU Lesser General Public License) Logback Classic Module (ch.qos.logback:logback-classic:1.5.18 - http://logback.qos.ch/logback-classic)
      (Eclipse Public License - v 1.0) (GNU Lesser General Public License) Logback Core Module (ch.qos.logback:logback-core:1.5.18 - http://logback.qos.ch/logback-core)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.19.1 - https://github.com/FasterXML/jackson)
@@ -9,6 +9,7 @@ Lists of 40 third-party dependencies.
      (MIT) NBT (com.github.Querz:NBT:6.1 - https://github.com/Querz/NBT)
      (BSD 2-Clause License) zstd-jni (com.github.luben:zstd-jni:1.5.6-4 - https://github.com/luben/zstd-jni)
      (The Apache Software License, Version 2.0) HikariCP (com.zaxxer:HikariCP:6.3.0 - https://github.com/brettwooldridge/HikariCP)
+     (Unknown license) Skyblock Shared Models (io.github.jaron2668:SkyblockSharedModels:1.0-SNAPSHOT - https://github.com/jaron2668/SkyblockSharedModels)
      (The Apache Software License, Version 2.0) micrometer-commons (io.micrometer:micrometer-commons:1.15.1 - https://github.com/micrometer-metrics/micrometer)
      (The Apache Software License, Version 2.0) micrometer-observation (io.micrometer:micrometer-observation:1.15.1 - https://github.com/micrometer-metrics/micrometer)
      (EPL 2.0) (GPL2 w/ CPE) Jakarta Annotations API (jakarta.annotation:jakarta.annotation-api:2.1.1 - https://projects.eclipse.org/projects/ee4j.ca)

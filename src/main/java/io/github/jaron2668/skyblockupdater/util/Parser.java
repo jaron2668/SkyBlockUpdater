@@ -2,8 +2,8 @@ package io.github.jaron2668.skyblockupdater.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.jaron2668.skyblockupdater.model.*;
-import io.github.jaron2668.skyblockupdater.model.Enchantment.EnchantmentType;
+import io.github.jaron2668.skyblocksharedmodels.*;
+import io.github.jaron2668.skyblocksharedmodels.Enchantment.EnchantmentType;
 import net.querz.nbt.io.NBTInputStream;
 import net.querz.nbt.tag.*;
 import org.apache.commons.text.StringEscapeUtils;

@@ -2,8 +2,8 @@ package io.github.jaron2668.skyblockupdater.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.jaron2668.skyblockupdater.model.AuctionActive;
-import io.github.jaron2668.skyblockupdater.model.AuctionEnded;
+import io.github.jaron2668.skyblocksharedmodels.AuctionActive;
+import io.github.jaron2668.skyblocksharedmodels.AuctionEnded;
 import io.github.jaron2668.skyblockupdater.util.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
