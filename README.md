@@ -9,8 +9,9 @@ in a PostgreSQL database and produces Kafka events for other microservices.
 
 - Periodically fetch active/ended auctions and store sales data.
 - Uses PostgreSQL as a persistent data store.
-- Dispatches Kafka events for new or ended auctions ('updater-newauction' / 'updater-endedauction').
-
+- Publishes Kafka events:
+  - updater-newauction
+  - updater-endedauction
 ---
 
 ## Technologies & Dependencies
@@ -29,7 +30,7 @@ in a PostgreSQL database and produces Kafka events for other microservices.
 ## Prerequisites
 
 - Docker & Docker Compose installed
-- [SkyblockSharedModels]("https://github.com/jaron2668/SkyblockSharedModels") installed into local Maven repository
+- [SkyblockSharedModels](https://github.com/jaron2668/SkyblockSharedModels) installed into local Maven repository
 
 ---
 
