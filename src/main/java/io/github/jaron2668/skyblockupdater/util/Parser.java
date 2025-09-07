@@ -213,6 +213,7 @@ public class Parser {
         }
 
         item.setRarity(auctionJson.get("tier").asText());
+        item.setDisplayName(auctionJson.get("item_name").asText());
 
 
         auction.setItem(item);
@@ -246,7 +247,7 @@ public class Parser {
         //item.setRarity(auctionJson.get("tier").asText()); rarity not it api result
         if (item.getRarity() == null)
             item.setRarity("");
-
+        // No need to set display name, because it's only used by the flipper with active auctions
 
         auction.setItem(item);
         auction.setItemId(item.getItemId());
