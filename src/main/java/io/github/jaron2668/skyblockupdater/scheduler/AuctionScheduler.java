@@ -1,7 +1,7 @@
 package io.github.jaron2668.skyblockupdater.scheduler;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.github.jaron2668.skyblockupdater.model.Auction;
+import io.github.jaron2668.skyblockupdater.model.AuctionActive;
+import io.github.jaron2668.skyblockupdater.model.AuctionEnded;
 import io.github.jaron2668.skyblockupdater.service.AuctionFetcherService;
 import io.github.jaron2668.skyblockupdater.service.AuctionProcessorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +9,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 @Component
 public class AuctionScheduler {
@@ -23,13 +21,13 @@ public class AuctionScheduler {
 
     @Scheduled(fixedRate = 1000 * 60 * 3)
     public void pollActiveAuctions() {
-        List<Auction> auctions = fetcher.fetchActiveAuctions();
+        List<AuctionActive> auctions = fetcher.fetchActiveAuctions();
         processor.processNewAuctions(auctions);
     }
 
     @Scheduled(fixedRate = 1000 * 50)
     public void pollEndedAuctions() {
-        List<JsonNode> auctions = fetcher.fetchEndedAuctions();
+        List<AuctionEnded> auctions = fetcher.fetchEndedAuctions();
         processor.processEndedAuctions(auctions);
     }
 }

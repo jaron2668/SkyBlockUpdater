@@ -1,10 +1,10 @@
 package io.github.jaron2668.skyblockupdater.repository;
 
-import io.github.jaron2668.skyblockupdater.model.Auction;
-import io.github.jaron2668.skyblockupdater.model.Enchantment;
+import io.github.jaron2668.skyblockupdater.model.*;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Transactional
 @Repository
 public class AuctionDao {
 
@@ -27,69 +28,152 @@ public class AuctionDao {
 
 
     @PostConstruct
-    public void createTableIfNotExists() {
-        String dropTable = """
-            DROP TABLE IF EXISTS auctions_active CASCADE;
-        """;
-        String createAuctionActive = """
-            CREATE TABLE auctions_active (
-                id UUID PRIMARY KEY,
+    public void setupTables() {
+        String createItems = """
+            CREATE TABLE IF NOT EXISTS items (
+                uuid UUID NOT NULL,
                 item_id TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
-                start_time TIMESTAMPTZ NOT NULL,
-                end_time TIMESTAMPTZ NOT NULL,
-                price BIGINT NOT NULL,
-                upgrade_level INTEGER NOT NULL,
-                reforge TEXT NOT NULL,
-                rarity TEXT NOT NULL,
-                hot_potato_count INTEGER NOT NULL,
-                art_of_war_count INTEGER NOT NULL,
-                art_of_peace_count INTEGER NOT NULL,
-                rarity_upgrades INTEGER NOT NULL
-            );
-        """;
-        String createAuctionsEnded = """
-            CREATE TABLE IF NOT EXISTS auctions_ended (
-                id UUID PRIMARY KEY,
-                item_id TEXT NOT NULL,
-                item_bytes TEXT NOT NULL,
-                time_ended TIMESTAMPTZ NOT NULL,
-                price BIGINT NOT NULL,
-                upgrade_level INTEGER NOT NULL,
-                reforge TEXT NOT NULL,
                 rarity TEXT,
+                remaining_tags_dump TEXT NOT NULL,
+                PRIMARY KEY (uuid,item_id)
+            );
+        """;
+
+        String createToolItems = """
+            CREATE TABLE IF NOT EXISTS tool_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                upgrade_level INTEGER NOT NULL,
+                reforge TEXT NOT NULL,
                 hot_potato_count INTEGER NOT NULL,
-                art_of_war_count INTEGER NOT NULL,
-                art_of_peace_count INTEGER NOT NULL,
-                rarity_upgrades INTEGER NOT NULL
-            );
-        """;
-        String createEnchantmentsActive = """
-            CREATE TABLE IF NOT EXISTS enchantments_active (
-                id UUID PRIMARY KEY,
-                enchantment TEXT NOT NULL,
-                level INTEGER NOT NULL,
-                FOREIGN KEY (id) REFERENCES auctions_active(id)
-                    ON UPDATE CASCADE
-                    ON DELETE CASCADE
-            );
-        """;
-        String createEnchantmentsEnded = """
-            CREATE TABLE IF NOT EXISTS enchantments_ended (
-                id UUID PRIMARY KEY,
-                enchantment TEXT NOT NULL,
-                level INTEGER NOT NULL,
-                FOREIGN KEY (id) REFERENCES auctions_ended(id)
+                rarity_upgrades INTEGER NOT NULL,
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
                     ON UPDATE CASCADE
                     ON DELETE CASCADE
             );
         """;
 
-        jdbc.execute(dropTable);
-        jdbc.execute(createAuctionActive);
-        jdbc.execute(createAuctionsEnded);
-        jdbc.execute(createEnchantmentsActive);
-        jdbc.execute(createEnchantmentsEnded);
+        String createWeaponItems = """
+            CREATE TABLE IF NOT EXISTS weapon_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                art_of_war_count INTEGER NOT NULL,
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES tool_items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createArmorItems = """
+            CREATE TABLE IF NOT EXISTS armor_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                art_of_peace_count INTEGER NOT NULL,
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES tool_items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createPetItems = """
+            CREATE TABLE IF NOT EXISTS pet_items (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                candy_count INTEGER NOT NULL,
+                pet_item TEXT NOT NULL,
+                PRIMARY KEY (uuid,item_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createEnchantments = """
+            CREATE TABLE IF NOT EXISTS enchantments (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                PRIMARY KEY (uuid,item_id,type),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createGemstones = """
+            CREATE TABLE IF NOT EXISTS gemstones (
+                uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                slot_id TEXT NOT NULL,
+                gem_purity TEXT NOT NULL,
+                gem_type TEXT NOT NULL,
+                PRIMARY KEY (uuid,item_id,slot_id),
+                FOREIGN KEY (uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            );
+        """;
+
+        String createAuctionsActive = """
+            CREATE TABLE IF NOT EXISTS auctions_active (
+                uuid UUID PRIMARY KEY,
+                item_uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                start_time TIMESTAMPTZ NOT NULL,
+                end_time TIMESTAMPTZ NOT NULL,
+                price BIGINT NOT NULL,
+                FOREIGN KEY (item_uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE RESTRICT
+            );
+        """;
+
+        String createAuctionsBought = """
+            CREATE TABLE IF NOT EXISTS auctions_bought (
+                uuid UUID PRIMARY KEY,
+                item_uuid UUID NOT NULL,
+                item_id TEXT NOT NULL,
+                time_bought TIMESTAMPTZ NOT NULL,
+                price BIGINT NOT NULL,
+                was_bin BOOLEAN NOT NULL,
+                FOREIGN KEY (item_uuid,item_id) REFERENCES items(uuid,item_id)
+                    ON UPDATE CASCADE
+                    ON DELETE RESTRICT
+            );
+        """;
+
+        String truncatePriorActiveAuctions = """
+            TRUNCATE TABLE auctions_active;
+        """;
+
+        String deleteUnusedItems = """
+            DELETE FROM items i
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM auctions_bought ab
+                        WHERE ab.item_uuid = i.uuid AND ab.item_id = i.item_id
+                    );
+        """;
+
+        LOG.debug("Creating tables if not exist and dropping prior active auctions.");
+        jdbc.execute(createItems);
+        jdbc.execute(createToolItems);
+        jdbc.execute(createWeaponItems);
+        jdbc.execute(createArmorItems);
+        jdbc.execute(createPetItems);
+        jdbc.execute(createEnchantments);
+        jdbc.execute(createGemstones);
+        jdbc.execute(createAuctionsActive);
+        jdbc.execute(createAuctionsBought);
+        jdbc.execute(truncatePriorActiveAuctions);
+        jdbc.execute(deleteUnusedItems);
+        LOG.debug("Finished creating tables and dropping auction.");
     }
 
     /**
@@ -97,187 +181,286 @@ public class AuctionDao {
      * @param auction active auction to save
      */
     @Transactional
-    public void saveActiveAuction(Auction auction) {
-        String insertAuction = """
+    public void saveAuction(AuctionActive auction) {
+        Item item = auction.getItem();
+
+        insertItem(item);
+
+        String insertAuctionActive = """
             INSERT INTO auctions_active (
-                id,
+                uuid,
+                item_uuid,
                 item_id,
-                item_bytes,
                 start_time,
                 end_time,
-                price,
-                upgrade_level,
-                reforge,
-                rarity,
-                hot_potato_count,
-                art_of_war_count,
-                art_of_peace_count,
-                rarity_upgrades
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO NOTHING
+                price
+            ) VALUES (?,?,?,?,?,?)
+            ON CONFLICT (uuid) DO NOTHING;
         """;
-
-        jdbc.update(insertAuction,
-                auction.getId(),
-                auction.getItemId(),
-                auction.getItemBytes(),
+        jdbc.update(insertAuctionActive,
+                auction.getUuid(),
+                item.getUuid(),
+                item.getItemId(),
                 Timestamp.from(auction.getStartTime()),
                 Timestamp.from(auction.getEndTime()),
-                auction.getPrice(),
-                auction.getUpgradeLevel(),
-                auction.getReforge(),
-                auction.getRarity(),
-                auction.getHotPotatoCount(),
-                auction.getArtOfWarCount(),
-                auction.getArtOfPeaceCount(),
-                auction.getRarityUpgrades()
+                auction.getPrice()
         );
 
-        List<Enchantment> enchantments = auction.getImportantEnchantments();
-        if(enchantments.isEmpty())
-            return;
-
-        String insertEnchantments = """
-            INSERT INTO enchantments_active(id, enchantment, level)
-            VALUES (?, ?, ?)
-            ON CONFLICT DO NOTHING;
-        """;
-        UUID auctionId = auction.getId();
-        for (Enchantment enchantment : enchantments) {
-            jdbc.update(insertEnchantments,
-                    auctionId,
-                    enchantment.type().toString(),
-                    enchantment.level()
-            );
-        }
-
-        LOG.debug("Inserted new auction: {}", auction.getId().toString());
+        LOG.debug("Inserted new auction: {}", auction.getUuid().toString());
     }
 
-    /**
-     * End an active auction when it was bought
-     * Removes the auction from auctions_active and inserts it into auctions_ended for later use
-     * @param auctionUUID UUID of auction which has ended
-     * @param timeEnded {@link Instant} where auction was bought
-     */
-    @Transactional
-    public void moveAuctionToEnded(UUID auctionUUID, Instant timeEnded) {
-        // Copy auction to auction_ended
-        String copyAuction = """
-            INSERT INTO auctions_ended (
-                id, item_id, item_bytes, time_ended,
-                price, upgrade_level, reforge, rarity,
-                hot_potato_count, art_of_war_count, art_of_peace_count, rarity_upgrades
-            )
-            SELECT
-                id, item_id, item_bytes, ?,
-                price, upgrade_level, reforge, rarity,
-                hot_potato_count, art_of_war_count, art_of_peace_count, rarity_upgrades
-            FROM auctions_active
-            WHERE id = ?
-        """;
 
-        // Copy enchantments to enchantments_ended
-        String copyEnchantments = """
-            INSERT INTO enchantments_ended (id, enchantment, level)
-            SELECT id, enchantment, level
-            FROM enchantments_active
-            WHERE id = ?
-        """;
-
-        jdbc.update(copyAuction, Timestamp.from(timeEnded), auctionUUID);
-        jdbc.update(copyEnchantments, auctionUUID);
-
-        deleteActiveAuction(auctionUUID);
-
-        LOG.debug("Moved auction to ended: {}", auctionUUID.toString());
-    }
 
     /**
      * Saves a bought auction that was not tracked before
      * @param auction auction to save
      */
     @Transactional
-    public void saveEndedAuction(Auction auction, Instant timeEnded) {
-        String insertAuction = """
-            INSERT INTO auctions_ended (
-                id,
-                item_id,
-                item_bytes,
-                time_ended,
-                price,
-                upgrade_level,
-                reforge,
-                rarity,
-                hot_potato_count,
-                art_of_war_count,
-                art_of_peace_count,
-                rarity_upgrades
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO NOTHING
-        """;
+    public void saveBoughtAuction(AuctionEnded auction) {
+        Item item = auction.getItem();
 
-        jdbc.update(insertAuction,
-                auction.getId(),
-                auction.getItemId(),
-                auction.getItemBytes(),
-                Timestamp.from(timeEnded),
+        insertItem(item);
+
+        String insertAuctionBought = """
+            INSERT INTO auctions_bought (
+                uuid,
+                item_uuid,
+                item_id,
+                time_bought,
+                price,
+                was_bin
+            ) VALUES (?,?,?,?,?,?)
+            ON CONFLICT (uuid) DO NOTHING;
+        """;
+        jdbc.update(insertAuctionBought,
+                auction.getUuid(),
+                item.getUuid(),
+                item.getItemId(),
+                Timestamp.from(auction.getTimeEnded()),
                 auction.getPrice(),
-                auction.getUpgradeLevel(),
-                auction.getReforge(),
-                auction.getRarity(),
-                auction.getHotPotatoCount(),
-                auction.getArtOfWarCount(),
-                auction.getArtOfPeaceCount(),
-                auction.getRarityUpgrades()
+                auction.wasBin()
         );
 
-        List<Enchantment> enchantments = auction.getImportantEnchantments();
-        if(enchantments.isEmpty())
-            return;
+        LOG.debug("Inserted ended auction: {}", auction.getUuid().toString());
+    }
 
-        String insertEnchantments = """
-            INSERT INTO enchantments_ended(id, enchantment, level)
-            VALUES (?, ?, ?)
-            ON CONFLICT DO NOTHING;
+    private void insertItem(Item item) {
+        String insertItem = """
+            INSERT INTO items (
+                uuid,
+                item_id,
+                item_bytes,
+                rarity,
+                remaining_tags_dump
+            ) VALUES (?,?,?,?,?)
+            ON CONFLICT (uuid,item_id) DO NOTHING;
         """;
-        UUID auctionId = auction.getId();
-        for (Enchantment enchantment : enchantments) {
-            jdbc.update(insertEnchantments,
-                    auctionId,
-                    enchantment.type().toString(),
-                    enchantment.level()
+
+        jdbc.update(insertItem,
+                item.getUuid(),
+                item.getItemId(),
+                item.getItemBytes(),
+                item.getRarity(),
+                item.getRemainingTagDump()
+        );
+
+        if (item instanceof ToolItem toolItem) {
+            String insertToolItem = """
+                INSERT INTO tool_items (
+                    uuid,
+                    item_id,
+                    upgrade_level,
+                    reforge,
+                    hot_potato_count,
+                    rarity_upgrades
+                ) VALUES (?,?,?,?,?,?)
+                ON CONFLICT (uuid,item_id) DO NOTHING;
+            """;
+            jdbc.update(insertToolItem,
+                    toolItem.getUuid(),
+                    toolItem.getItemId(),
+                    toolItem.getUpgradeLevel(),
+                    toolItem.getReforge(),
+                    toolItem.getHotPotatoCount(),
+                    toolItem.getRarityUpgrades()
+            );
+
+            if (toolItem instanceof WeaponItem weaponItem) {
+                String insertWeaponItem = """
+                    INSERT INTO weapon_items (
+                        uuid,
+                        item_id,
+                        art_of_war_count
+                    ) VALUES (?,?,?)
+                    ON CONFLICT (uuid,item_id) DO NOTHING;
+                """;
+                jdbc.update(insertWeaponItem,
+                        weaponItem.getUuid(),
+                        weaponItem.getItemId(),
+                        weaponItem.getArtOfWarCount()
+                );
+
+            } else if (toolItem instanceof ArmorItem armorItem) {
+                String insertArmorItem = """
+                    INSERT INTO armor_items (
+                        uuid,
+                        item_id,
+                        art_of_peace_count
+                    ) VALUES (?,?,?)
+                    ON CONFLICT (uuid,item_id) DO NOTHING;
+                """;
+                jdbc.update(insertArmorItem,
+                        armorItem.getUuid(),
+                        armorItem.getItemId(),
+                        armorItem.getArtOfPeaceCount()
+                );
+            }
+
+        } else if (item instanceof PetItem petItem) {
+            String insertPetItem = """
+                INSERT INTO pet_items (
+                    uuid,
+                    item_id,
+                    level,
+                    candy_count,
+                    pet_item
+                ) VALUES (?,?,?,?,?)
+                ON CONFLICT (uuid,item_id) DO NOTHING;
+            """;
+            jdbc.update(insertPetItem,
+                    petItem.getUuid(),
+                    petItem.getItemId(),
+                    petItem.getLevel(),
+                    petItem.getCandyCount(),
+                    petItem.getPetItem()
             );
         }
 
-        LOG.debug("Inserted ended auction: {}", auction.getId().toString());
+        List<Enchantment> enchantments = item.getEnchantments();
+        if (!enchantments.isEmpty()) {
+            String insertEnchantment = """
+                INSERT INTO enchantments (
+                    uuid,
+                    item_id,
+                    type,
+                    level
+                ) VALUES (?,?,?,?)
+                ON CONFLICT (uuid,item_id,type) DO NOTHING;
+            """;
+            for (Enchantment enchantment : enchantments) {
+                jdbc.update(insertEnchantment,
+                        item.getUuid(),
+                        item.getItemId(),
+                        enchantment.type().toString(),
+                        enchantment.level()
+                );
+            }
+        }
+
+        List<GemstoneSlot> gemstones = item.getGemstones();
+        if (!gemstones.isEmpty()) {
+            String insertGemstone = """
+                INSERT INTO gemstones (
+                    uuid,
+                    item_id,
+                    slot_id,
+                    gem_purity,
+                    gem_type
+                ) VALUES (?,?,?,?,?)
+                ON CONFLICT (uuid,item_id,slot_id) DO NOTHING;
+            """;
+            for (GemstoneSlot gemstone : gemstones) {
+                jdbc.update(insertGemstone,
+                        item.getUuid(),
+                        item.getItemId(),
+                        gemstone.slotName(),
+                        gemstone.gemPurity(),
+                        gemstone.gemType()
+                );
+            }
+        }
     }
 
+
     /**
-     * Deletes an active auction
+     * End an active auction when it was bought
+     * Removes the auction from AuctionActive and inserts it into AuctionsBought for later use
+     * @param auctionUUID UUID of auction which was bought
+     * @param timeBought {@link Instant} where auction was bought
+     */
+    @Transactional
+    public void moveAuctionToBought(UUID auctionUUID, Instant timeBought) {
+        String copyAuction = """
+            INSERT INTO auctions_bought (
+                uuid,
+                item_uuid,
+                item_id,
+                time_bought,
+                price,
+                was_bin
+            )
+            SELECT
+                uuid,item_uuid,item_id,?,price,?
+            FROM auctions_active
+            WHERE uuid = ?
+        """;
+
+        jdbc.update(copyAuction,
+                Timestamp.from(timeBought),
+                true,
+                auctionUUID
+        );
+
+        deleteActiveAuction(auctionUUID);
+
+        LOG.debug("Moved auction to ended: {}", auctionUUID.toString());
+    }
+
+
+    /**
+     * Deletes an active auction (but NOT the corresponding item)
      * @param auctionUUID UUID of the auction which should be deleted
      */
     @Transactional
     public void deleteActiveAuction(UUID auctionUUID) {
-        // Delete from enchantments_active
-        String deleteEnchantments = "DELETE FROM enchantments_active WHERE id = ?";
-
-        // Delete from auction_active
-        String deleteAuction = "DELETE FROM auctions_active WHERE id = ?";
-
-        jdbc.update(deleteEnchantments, auctionUUID);
+        String deleteAuction = "DELETE FROM auctions_active WHERE uuid = ?";
         jdbc.update(deleteAuction, auctionUUID);
+    }
+
+    /**
+     * Deletes an active auction (AND the corresponding item)
+     * @param auctionUuid UUID of the auction which should be deleted
+     */
+    @Transactional
+    public void deleteActiveAuctionAndItem(UUID auctionUuid) {
+        String sql = "SELECT item_uuid FROM auctions_active WHERE uuid = ?;";
+        UUID itemUuid;
+        try {
+            itemUuid = jdbc.queryForObject(sql, UUID.class, auctionUuid);
+        } catch (DataAccessException e) {
+            LOG.warn("Couldn't access item_uuid from auction with uuid {} for removal. Skipping deletion.",auctionUuid);
+            return;
+        }
+        String deleteAuction = "DELETE FROM auctions_active WHERE uuid = ?;";
+        jdbc.update(deleteAuction, auctionUuid);
+
+        String deleteItem = """
+            DELETE FROM items
+            WHERE uuid = ?;
+        """;
+
+        jdbc.update(deleteItem, itemUuid);
     }
 
 
     /**
      * Checks if an active auction with passed uuid exists
-     * @param id uuid to check
+     * @param uuid uuid to check
      * @return true if auction exists
      */
-    public boolean existsActiveById(UUID id) {
-        String sql = "SELECT COUNT(*) FROM auctions_active WHERE id = ?";
-        Integer count = jdbc.queryForObject(sql, Integer.class, id);
+    public boolean existsActiveByUuid(UUID uuid) {
+        String sql = "SELECT COUNT(*) FROM auctions_active WHERE uuid = ?";
+        Integer count = jdbc.queryForObject(sql, Integer.class, uuid);
         return count != null && count > 0;
     }
 

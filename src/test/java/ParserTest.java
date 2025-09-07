@@ -1,8 +1,9 @@
-package io.github.jaron2668.skyblockupdater.util;
-
-import io.github.jaron2668.skyblockupdater.model.Auction;
 import io.github.jaron2668.skyblockupdater.model.Enchantment;
 import io.github.jaron2668.skyblockupdater.model.Enchantment.EnchantmentType;
+import io.github.jaron2668.skyblockupdater.model.GemstoneSlot;
+import io.github.jaron2668.skyblockupdater.model.ToolItem;
+import io.github.jaron2668.skyblockupdater.model.WeaponItem;
+import io.github.jaron2668.skyblockupdater.util.Parser;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,30 +11,29 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AttributeParserTest {
+public class ParserTest {
 
     @Test
     public void testParseHypixelUuid_valid() {
         String uuidStr = "409a1e0f-261a-4984-9493-278d6cd9305a";
-        UUID uuid = AttributeParser.parseHypixelUuid(uuidStr.replace("-", ""));
+        UUID uuid = Parser.parseHypixelUuid(uuidStr.replace("-", ""));
         assertEquals(UUID.fromString(uuidStr), uuid);
     }
 
     @Test
     public void testParseAttributes_validItemBytes_parsesCorrectly() {
 
-        Auction auction = new Auction();
-        auction.setId(UUID.randomUUID());
         // For detailed info see end of the class
+        // test base and enchantments
         String base64Nbt = "H4sIAAAAAAAA/1VVz28bRRR+rt3EdlsKLRJCKmiAFqVKYxwnsUkPSK7jxIa0RbGbFCG0mt2d2KPs7qx2ZlPnyJUzlRCiN6QgLtw4cYrE/4HyhyC+2bUdY6288+Z978e89+bbKlGFCrJKRIVrdE36hXcLdL2j0sgUqlQ0fFShkoi8MdlfgW68iNxE8BPuBqJQpEpP+mI34CMN7b9VWvaljgN+BqN9lYgydhl9cHHe2uEhH4nH7OLcW23UG7UmVmJldaP+kBpQD0wiopEZ54CN7a3a+hyAxfYKjJp25a+srm8+pPdg00mkYYt+W/UH9KFFfwvc5ZvvsfpuLv78oxWRzx6ki/Mg/x+oNGBdbkTCDqF/ZOFPeCSYOmbtxIwTFStfs8P+TNkZ8zCWKmIvqWbFQPBTcWVrc5IeDxYtUlfqkB3SBoSdhMuI9ef4buQj9AAVsxnMbboT4aUGfumLTIpFItEEsWC5KxPB2joWnmH9/txyT/LIsK9kEGQOaQt7/TDmgYxGi7h9YcbYNGcLUfeVMhns0PZkez/1Tha0Aw8njUaLlRqMeRJHQtsC9emx3QmlTfsqznCc2iMGKvEXfA0TGQdiDV2XJ/ZQ9BE2D21lk6xWc+ChiFSoUgRA5+6h6T2B4qLZW/XLN79i0UJp2FiaGrXslOVavtrYqj+wWj8bD2YUhMY/f71mL5AN960qVK7Gq0ab+MezZztzcb6xurl1+dMfrKNClxt2JLWvQqgZHwGgzdQR3cH7/85qSPH+xXmz7Upb2MdsiPF5xewcY9IO+nu9Ievs9ztf0SewyJVnKk1YjweuSPxHLMvWdoAHAX0GkIhEKIVmyEwazWJuxkCJvJuownr9gU0tFIEQtDI/bw3ZR9qOkMRw2il+pZmnsuS3GxNawytLGiMU8ogzHvmZW+uzMWEzXe6NPoaMaYngSbA4EacSHakB9flKyCdsvTl5SHchPbWuOghjr+NGo456vINIRxJ2ifDZExWlmj61tU4wpTrrlL3nHi4rm1HAtKn0ftYWr8MN99ALi24F4lQEts6rs0t8wi/OE5ZLT78Z9vodNjh6frDDrgBlKj3joaAmtua5TGtu77k91WCMTV/YXjYvf/l98aEq3e5OTMLbBuPq4lrqIt1OOG76mZPGo4T7wrIf2PDtsTJOrAw3yvEshWL7dpVKIxHqMpW/bA++7h44dSrt9p91sdF5/vRJezjbqNBbaRQo70T4jg6U0ZY9ry2YzfFlujlbOvBNSzmEluiON+Unx8vm15nE7dMjPfjh7z8RL1S+PJaobfnVtA5FujU9gpPVFhGvl+1ngO62X3ad57vOsNd1Br2D7s5Od6dKN+2nAL0LBfpXpLKcUgvsikW644I6HXXs8Dl1QrFUpFIALsmXZW9Kkbm45GUMauMWaTnIGQhSqUjXtSUTrJcB02fxWEW54m4aGBmCtB0N+naEpe/cQUXPSCqXkS7IB9W0/JoHvHEM4nR4Rpx51lUx59fcf+V0xkS5ybLI6Xjqc2Qp1jnJKHZ6ptMpTeWIWyajN0dn9Jb7vGGuiDA3qugZe06P6GUfitxFedZHiFVggxldW1vCRKcpenRfeJsNt9lYXxPuMV/bXG/V19wW99fEdoM3/a3m8YbbLFEF1RLawCGm9PVv92q7dq6W8k+n/az/B5EqnO8FCAAA";
-        auction.setItemBytes(base64Nbt);
-        AttributeParser.parseAttributes(auction);
+        ToolItem item = (ToolItem) Parser.createItemFromBytes(base64Nbt);
 
 
-        assertEquals("AXE_OF_THE_SHREDDED", auction.getItemId());
-        assertEquals("withered", auction.getReforge());
+        assertNotNull(item);
+        assertEquals("AXE_OF_THE_SHREDDED", item.getItemId());
+        assertEquals("withered", item.getReforge());
 
-        List<Enchantment> enchants = auction.getImportantEnchantments();
+        List<Enchantment> enchants = item.getEnchantments();
         assertNotNull(enchants);
         // enchantments that should be extracted
         // bane 6
@@ -53,7 +53,7 @@ public class AttributeParserTest {
 
 
 
-        Enchantment bane = enchants.get(0);
+        Enchantment bane = enchants.getFirst();
         assertEquals(EnchantmentType.BANE_OF_ARTHROPODS, bane.type());
         assertEquals(6, bane.level());
 
@@ -61,23 +61,19 @@ public class AttributeParserTest {
         assertEquals(EnchantmentType.CHAMPION, champ.type());
         assertEquals(10, champ.level());
 
-        assertEquals(5, auction.getUpgradeLevel());
-        assertEquals(15, auction.getHotPotatoCount());
-        assertEquals(1, auction.getRarityUpgrades());
-        assertEquals(0, auction.getArtOfPeaceCount());
-        assertEquals(0, auction.getArtOfWarCount());
+        assertEquals(5, item.getUpgradeLevel());
+        assertEquals(15, item.getHotPotatoCount());
+        assertEquals(1, item.getRarityUpgrades());
 
-        // second auction
-
-        Auction auction2 = new Auction();
-        auction2.setId(UUID.randomUUID());
+        // second item
+        // test upgradelevel, hpb, and more
         String base64Nbt2 = "H4sIAAAAAAAA/21WW28bRRQ+rtP40pSWqg9cpDJCFFpMgp3EccKbYztpRNJWsZu2QtVqPDveHXl3ZzU7duNH+A08oKo855GfgJQn/gJPSPkZPCDO7OzaDiKKsnPuZ87lm1QBKlAQVQAo3IAbwi18WoCbHTmJdKEKRU29CqzwiPlgfgpw60U0VJyO6TDghSJUngiXHwTUS1D6TxVKrkjigM7Q6FgqXkbul/DJ5UWrS0Pq8e/I5QWrbW3hhz+qbdUfw7co62vFI0/7Vrq51ZiL8bDzQ635Br97j2qb9cZj+BwNOkposvC4V2tsbj/Eg4s62w8fwz3UOeBKMqFn1mkz5fVjzl3DGNV2NlpNuI+8E+oJRg5ElAqGtR14kEa9vNi9evcznt78h8QrHWKoy4vA/u34IuSKkqOjI0zlG5PPPo04kSPSVtpXMpZuQs4W0o5Pw1jIiLyChiEDTqccFeZyvJ1gNLhmMxmKJEQO7CHVFVOBEQ7FSC+H7SoqInKWk73I5Yr0sRv4QV+wa5jnnE30crjeecyVwBbzhemBUJy0k5izNAC0kHcoaKTJ9yIIrLtc91DRKdZ5yeNRGNNARB45gzqSx1z7SF9TOZZSpxpzxoSN0ySbSPQZViTy0ji5Qt+nKo54cq2U/VCkd7Fl6YcywCtf8zugQ5owuVymgT8xlQmkcuemAyXigK/jJIrxUh3OTKeUrfycxyMZyonJA9YMLZhISRyMdRwo/D3EPiR27rIxRaKFZSYDGpr0Aj7lwQZ8ZdU7MhY8IdrnJNFUJ2SkZEhmcqIIZVpMOZRSc72BITasTY+qyAxmbatJmLThWqldKKNEY6gxdioxFl+b9eM0MCoUl6huVqXl2ryoZ3LVyNm8ev87fITfk5n2ZSC9dAZRM5TD1E8ju1m6JvWN5tX734z4ugeybA01ZGYeyEgqwinzUXFrnydaUDUz9lpgsnhZeISEb1ZhEgWSjbmbmvyf21sLtyaxD7ELLwWWT6HNvowmCXxpclU4sPbSBlHY1a8/khxqsn7Ax2k1WYdqymQ4TKuYNQdM9nbNx/TywmRiqJPXgydHHdJ/+ey0SxYKZVh5SkMOD5B19e4dmefTpdylAc7HfkBdDlW40zvXirY1jtoQNzEpwh1FceVnziT2FOoYKEVovetL7cQSB0I6zOAxsu9UYcXjYVKGcufZyX574NSh9Lx3etDrDCrwQV44JwmkTgz43lhSzE+NMqzlRwe9wcqzp69fLZj1ZebcaB4HVuEeyyDMMUWj2jmP28///Kw2+/sntAilK0bYVCi/zYqAl6FKO3LkvKVqfplC2bw3cL8/aJ+e9rpOt93rto9f9J32q14V1syjgw0MOTaxCGWRgQoa3izCSoB4gccSSliGl5a8mRhMsGf0gYuO1TAQaFmVJMcWpFeLUOVz+LOeb40Q+xyaYh9yishxU7h1PIRby1nzDBY64xQLrd/brqIeFgSxRee+y9MMKix5W6cg4yQpyNhoJW3xKYukF9CUp5vDnqVXWfoQWIeVIEdWS98b4rtjqkzn7461Kk0tRtmYqyx9cbL7J3PQzKTJLPZllKUXWJy21N1JoEVINXeYffNs1pVpjpLWZYnbNyYrQj4rSFYB12QywaZ/wTnbq+80m+utBuPr23TI14e7u3S92dpu7bHd+jbf3FyBCsZDqEAHOC6//EH/ujQjvWox1fxD8i/TY2n6vwgAAA==";
-        auction2.setItemBytes(base64Nbt2);
 
-        AttributeParser.parseAttributes(auction2);
-        assertEquals("withered", auction2.getReforge());
+        WeaponItem item2 = (WeaponItem) Parser.createItemFromBytes(base64Nbt2);
+        assertNotNull(item2);
+        assertEquals("withered", item2.getReforge());
 
-        List<Enchantment> enchants2 = auction2.getImportantEnchantments();
+        List<Enchantment> enchants2 = item2.getEnchantments();
         assertNotNull(enchants2);
 
         assertEquals(26, enchants2.size());
@@ -86,13 +82,19 @@ public class AttributeParserTest {
         assertEquals(EnchantmentType.LUCK, ench.type());
         assertEquals(7, ench.level());
 
-        assertEquals(0, auction2.getUpgradeLevel());
-        assertEquals(15, auction2.getHotPotatoCount());
-        assertEquals(1, auction2.getRarityUpgrades());
-        assertEquals(0, auction2.getArtOfPeaceCount());
-        assertEquals(1, auction2.getArtOfWarCount());
+        assertEquals(0, item2.getUpgradeLevel());
+        assertEquals(15, item2.getHotPotatoCount());
+        assertEquals(1, item2.getRarityUpgrades());
+        assertEquals(1, item2.getArtOfWarCount());
 
 
+        // Test gem extraction
+        String base64Nbt3 = "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";
+        ToolItem item3 = (ToolItem) Parser.createItemFromBytes(base64Nbt3);
+        assertNotNull(item3);
+        List<GemstoneSlot> gemstones = item3.getGemstones();
+        assertEquals("FLAWLESS",gemstones.getFirst().gemPurity());
+        assertEquals("JASPER",gemstones.getFirst().gemType());
     }
 
     @Test
@@ -101,7 +103,7 @@ public class AttributeParserTest {
 
         Exception exception = assertThrows(Exception.class, () -> {
             // Using reflection because decodeItemBytes is private
-            java.lang.reflect.Method method = AttributeParser.class.getDeclaredMethod("decodeItemBytes", String.class);
+            java.lang.reflect.Method method = Parser.class.getDeclaredMethod("decodeItemBytes", String.class);
             method.setAccessible(true);
             method.invoke(null, invalidRootTagBase64);
         });
