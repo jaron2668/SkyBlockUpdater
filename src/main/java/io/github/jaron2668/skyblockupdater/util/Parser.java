@@ -211,7 +211,6 @@ public class Parser {
             LOG.error("Couldn't create item for active auction from json: {}", auctionJson);
             return null;
         }
-
         item.setRarity(auctionJson.get("tier").asText());
         item.setDisplayName(auctionJson.get("item_name").asText());
 
@@ -281,7 +280,6 @@ public class Parser {
             }
 
             List<String> processedExtraAttributes = new ArrayList<>();
-
             CompoundTag itemTag = (CompoundTag) nbtList.get(0);
             CompoundTag tag = itemTag.getCompoundTag("tag");
             CompoundTag extra = tag.getCompoundTag("ExtraAttributes");
@@ -300,6 +298,13 @@ public class Parser {
                 item = new Item();
             }
 
+            // Count
+            ByteTag countTag = itemTag.getByteTag("Count");
+            if (countTag != null) {
+                item.setCount(countTag.asByte());
+            } else {
+                item.setCount(1);
+            }
 
             // UUID
             try {

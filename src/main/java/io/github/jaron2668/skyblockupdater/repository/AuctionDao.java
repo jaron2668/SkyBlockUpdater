@@ -34,6 +34,7 @@ public class AuctionDao {
                 uuid UUID NOT NULL,
                 item_id TEXT NOT NULL,
                 item_bytes TEXT NOT NULL,
+                count INTEGER NOT NULL,
                 rarity TEXT,
                 remaining_tags_dump TEXT NOT NULL,
                 PRIMARY KEY (uuid,item_id)
@@ -250,6 +251,7 @@ public class AuctionDao {
                 uuid,
                 item_id,
                 item_bytes,
+                count,
                 rarity,
                 remaining_tags_dump
             ) VALUES (?,?,?,?,?)
@@ -260,6 +262,7 @@ public class AuctionDao {
                 item.getUuid(),
                 item.getItemId(),
                 item.getItemBytes(),
+                item.getCount(),
                 item.getRarity(),
                 item.getRemainingTagDump()
         );
