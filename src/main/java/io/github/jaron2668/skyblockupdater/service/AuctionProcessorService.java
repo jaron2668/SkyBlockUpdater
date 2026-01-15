@@ -22,6 +22,8 @@ public class AuctionProcessorService {
     @Autowired
     private KafkaPublisherService kafkaPublisher;
 
+    private boolean firstFetch = true;
+
     /**
      * Processes new auctions
      *
@@ -29,9 +31,12 @@ public class AuctionProcessorService {
      */
     public void processNewAuctions(List<AuctionActive> auctions) {
         for (AuctionActive auction : auctions) {
-            kafkaPublisher.publishNewAuction(auction);
+            if (!firstFetch)
+                kafkaPublisher.publishNewAuction(auction);
             auctionDao.saveAuction(auction);
         }
+        if (firstFetch)
+            firstFetch = false;
     }
 
     /**

@@ -19,12 +19,15 @@ public class KafkaPublisherService {
 
     private final String TOPIC_NEW = "updater-newauction";
     private final String TOPIC_ENDED = "updater-endedauction";
+    private boolean finishedFetching = false;
 
     public KafkaPublisherService(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     public void publishNewAuction(AuctionActive auction) {
+        if (!finishedFetching) // Don't publish events while fetching for the first time,
+            return; // because that would publish ~40k new auction events in at most a few seconds and put a heck of load on the db because of the flippers
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
@@ -41,6 +44,10 @@ public class KafkaPublisherService {
         } catch (Exception e) {
             LOG.error("Couldn't publish kafka event with topic {}.",TOPIC_ENDED,e);
         }
+    }
+
+    public void finishedFirstFetch() {
+        finishedFetching = true;
     }
 }
 

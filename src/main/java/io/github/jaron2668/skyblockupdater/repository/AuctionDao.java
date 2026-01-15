@@ -254,7 +254,7 @@ public class AuctionDao {
                 count,
                 rarity,
                 remaining_tags_dump
-            ) VALUES (?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?)
             ON CONFLICT (uuid,item_id) DO NOTHING;
         """;
 
