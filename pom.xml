@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.jaron2668</groupId>
-    <artifactId>SkyblockUpdater</artifactId>
+    <artifactId>SkyBlockUpdater</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>SkyblockUpdater</name>
+    <name>SkyBlock Updater</name>
     <description>Java backend to update the central db with new Hypixel Skyblock data like auctions</description>
-    <url>https://github.com/jaron2668/SkyblockUpdater</url>
+    <url>https://github.com/jaron2668/SkyBlockUpdater</url>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -51,7 +51,7 @@
             <!-- Shared Model Classes -->
             <dependency>
                 <groupId>io.github.jaron2668</groupId>
-                <artifactId>SkyblockSharedModels</artifactId>
+                <artifactId>SkyBlockSharedModels</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
