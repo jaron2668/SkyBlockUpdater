@@ -1,17 +1,15 @@
 # Stage 1: Build with Maven + JDK 21
 FROM maven:3.9.11-eclipse-temurin-21-alpine AS build
-
 WORKDIR /app
-
 # Copy shared models first and install it into local repo
-COPY SkyblockSharedModels /app/SkyblockSharedModels
-RUN mvn -f /app/SkyblockSharedModels/pom.xml clean install -DskipTests
+COPY lib/skyblock-shared-models ./skyblock-shared-models
+RUN mvn -f ./skyblock-shared-models/pom.xml clean install -DskipTests
 
 # Copy and build the microservice
-COPY SkyblockUpdater/pom.xml .
-COPY SkyblockUpdater/src ./src
-COPY SkyblockUpdater/THIRD-PARTY-LICENSES.txt .
-COPY SkyblockUpdater/LICENSE.txt .
+COPY services/skyblock-updater/pom.xml .
+COPY services/skyblock-updater/src ./src
+COPY services/skyblock-updater/THIRD-PARTY-LICENSES.txt .
+COPY services/skyblock-updater/LICENSE.txt .
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime with JDK 21
