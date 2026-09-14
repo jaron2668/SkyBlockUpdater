@@ -31,8 +31,11 @@ public class AuctionProcessorService {
      */
     public void processNewAuctions(List<AuctionActive> auctions) {
         for (AuctionActive auction : auctions) {
-            if (!firstFetch)
+            if (!firstFetch) { // Don't publish events while fetching for the first time, because that would
+                               // publish ~40k new auction events in at most a few seconds and put a heck of
+                               // load on the db because of the flippers
                 kafkaPublisher.publishNewAuction(auction);
+            }
             auctionDao.saveAuction(auction);
         }
         if (firstFetch)
@@ -54,9 +57,9 @@ public class AuctionProcessorService {
             kafkaPublisher.publishEndedAuction(uuid);
 
             boolean exists = auctionDao.existsActiveByUuid(uuid);
-            if(auction.wasBought()) {
+            if (auction.wasBought()) {
                 if (exists) {
-                    auctionDao.moveAuctionToBought(uuid,auction.getTimeEnded());
+                    auctionDao.moveAuctionToBought(uuid, auction.getTimeEnded());
                     movedAuctions++;
                 } else {
                     auctionDao.saveBoughtAuction(auction);

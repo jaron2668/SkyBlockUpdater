@@ -8,13 +8,11 @@ RUN mvn -f ./skyblock-shared-models/pom.xml clean install -DskipTests
 # Copy and build the microservice
 COPY services/skyblock-updater/pom.xml .
 COPY services/skyblock-updater/src ./src
-COPY services/skyblock-updater/THIRD-PARTY-LICENSES.txt .
-COPY services/skyblock-updater/LICENSE.txt .
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime with JDK 21
 FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
-COPY --from=build /app/target/SkyblockUpdater-1.0-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/SkyBlockUpdater-1.0-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
