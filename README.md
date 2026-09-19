@@ -28,12 +28,7 @@ Docker Compose supplies PostgreSQL and Redpanda when the service is run as part 
 
 ## Build locally
 
-Install the shared models artifact first, then build this service:
-
 ```bash
-# Run in skyblock-shared-models
-mvn clean install
-
 # Run in skyblock-updater
 mvn clean verify
 ```
